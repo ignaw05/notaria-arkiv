@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Calendar, FileText, MessageSquare, Shield, ShieldCheck, ShieldX, Clock, User } from 'lucide-react'
+import { ArrowLeft, Plus, Calendar, FileText, MessageSquare, Shield, ShieldCheck, ShieldX, Clock, User, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { format, differenceInYears, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -87,6 +87,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     description: '',
     category: 'other',
   })
+  const [isEditHistoryOpen, setIsEditHistoryOpen] = useState(false)
+  const [editingHistory, setEditingHistory] = useState<{
+    id: string
+    entry_date: string
+    description: string
+    category: string
+  } | null>(null)
 
   const handleAddHistory = async () => {
     if (!newHistory.entryDate || !newHistory.description) {
@@ -109,6 +116,35 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       mutate()
     } catch {
       toast.error('Error al agregar historial')
+    }
+  }
+
+  const handleEditHistory = async () => {
+    if (!editingHistory || !editingHistory.entry_date || !editingHistory.description) {
+      toast.error('Fecha y descripción son requeridos')
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/patients/${id}/history`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entryId: editingHistory.id,
+          entryDate: editingHistory.entry_date,
+          description: editingHistory.description,
+          category: editingHistory.category,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Error al actualizar historial')
+
+      toast.success('Historial actualizado exitosamente')
+      setEditingHistory(null)
+      setIsEditHistoryOpen(false)
+      mutate()
+    } catch {
+      toast.error('Error al actualizar historial')
     }
   }
 
@@ -185,7 +221,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 items-start">
         {/* Medical History */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -210,16 +246,34 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             ) : (
               <div className="space-y-4">
                 {patient.medical_history.map((entry) => (
-                  <div key={entry.id} className="border-l-2 border-muted pl-4 pb-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        {format(parseISO(entry.entry_date), 'dd MMM yyyy', { locale: es })}
-                      </span>
-                      <Badge className={getCategoryColor(entry.category)} variant="secondary">
-                        {getCategoryLabel(entry.category)}
-                      </Badge>
+                  <div key={entry.id} className="border-l-2 border-muted pl-4 pb-4 group relative">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {format(parseISO(entry.entry_date), 'dd MMM yyyy', { locale: es })}
+                        </span>
+                        <Badge className={getCategoryColor(entry.category)} variant="secondary">
+                          {getCategoryLabel(entry.category)}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setEditingHistory({
+                            id: entry.id,
+                            entry_date: entry.entry_date.split('T')[0],
+                            description: entry.description,
+                            category: entry.category || 'other',
+                          })
+                          setIsEditHistoryOpen(true)
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      </Button>
                     </div>
-                    <p className="text-sm">{entry.description}</p>
+                    <p className="text-sm pr-8">{entry.description}</p>
                   </div>
                 ))}
               </div>
@@ -243,38 +297,40 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <p>No hay consultas registradas</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {patient.sessions.map((session) => (
-                  <Link key={session.id} href={`/dashboard/session/${session.id}`}>
-                    <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-sm">{session.title}</span>
-                        {session.is_active ? (
-                          <Badge variant="secondary" className="bg-green-100 text-green-800">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Activa
-                          </Badge>
-                        ) : session.session_hash ? (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                            <ShieldCheck className="h-3 w-3 mr-1" />
-                            Sellada
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Cerrada</Badge>
-                        )}
+              <div className="space-y-4">
+                {[...patient.sessions]
+                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                  .map((session) => (
+                    <Link key={session.id} href={`/dashboard/session/${session.id}`}>
+                      <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-sm">{session.title}</span>
+                          {session.is_active ? (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Activa
+                            </Badge>
+                          ) : session.session_hash ? (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              <ShieldCheck className="h-3 w-3 mr-1" />
+                              Sellada
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Cerrada</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{format(parseISO(session.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                          {session.arkiv_entity_id && (
+                            <Badge variant="outline" className="text-xs">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Arkiv
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{format(parseISO(session.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                        {session.arkiv_entity_id && (
-                          <Badge variant="outline" className="text-xs">
-                            <Shield className="h-3 w-3 mr-1" />
-                            Arkiv
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
               </div>
             )}
           </CardContent>
@@ -336,6 +392,70 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </Button>
             <Button onClick={handleAddHistory}>
               Agregar Registro
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Edit History Dialog */}
+      <Dialog open={isEditHistoryOpen} onOpenChange={setIsEditHistoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Registro Médico</DialogTitle>
+            <DialogDescription>
+              Modifica los detalles del registro de {patient.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          {editingHistory && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="editEntryDate">Fecha del Registro *</Label>
+                <Input
+                  id="editEntryDate"
+                  type="date"
+                  value={editingHistory.entry_date}
+                  onChange={(e) => setEditingHistory({ ...editingHistory, entry_date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editCategory">Categoría</Label>
+                <Select
+                  value={editingHistory.category}
+                  onValueChange={(value) => setEditingHistory({ ...editingHistory, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diagnosis">Diagnóstico</SelectItem>
+                    <SelectItem value="treatment">Tratamiento</SelectItem>
+                    <SelectItem value="surgery">Cirugía</SelectItem>
+                    <SelectItem value="allergy">Alergia</SelectItem>
+                    <SelectItem value="medication">Medicación</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editDescription">Descripción *</Label>
+                <Textarea
+                  id="editDescription"
+                  value={editingHistory.description}
+                  onChange={(e) => setEditingHistory({ ...editingHistory, description: e.target.value })}
+                  placeholder="Detalle del registro médico..."
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsEditHistoryOpen(false)
+              setEditingHistory(null)
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditHistory}>
+              Guardar Cambios
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -148,6 +148,23 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Track message count to trigger summary on page exit
+  const messagesCountRef = useRef(0)
+  useEffect(() => {
+    messagesCountRef.current = messages.length
+  }, [messages])
+
+  useEffect(() => {
+    return () => {
+      if (messagesCountRef.current > 0) {
+        fetch(`/api/session/${id}/summary`, {
+          method: 'POST',
+          keepalive: true,
+        }).catch((err) => console.error('Failed to trigger summary on exit:', err))
+      }
+    }
+  }, [id])
+
   const handleSend = async () => {
     if (!input.trim() || isSending || !session?.is_active) return
 
@@ -253,6 +270,11 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       setShowSealDialog(false)
       setShowSealResultDialog(true)
       mutateSession()
+
+      // Generate summary on seal
+      fetch(`/api/session/${id}/summary`, { method: 'POST' }).catch((err) =>
+        console.error('Failed to generate summary on seal:', err)
+      )
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al sellar sesion')
     } finally {

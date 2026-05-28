@@ -47,6 +47,7 @@ export interface Session {
   is_active: boolean
   session_hash: string | null
   arkiv_entity_id: string | null
+  summary: string | null
   created_at: string
   updated_at: string
 }
