@@ -25,8 +25,10 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar user={user} profile={profile} />
-      <SidebarInset>
-        {children}
+      <SidebarInset className="bg-background">
+        <main className="min-h-screen">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   )

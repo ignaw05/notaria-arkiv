@@ -174,7 +174,7 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Pacientes</h1>
@@ -273,10 +273,10 @@ export default function PatientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {data.patients.map((patient) => (
             <Card key={patient.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">{patient.full_name}</CardTitle>
@@ -308,11 +308,11 @@ export default function PatientsPage() {
                 {patient.medical_history?.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground font-medium">Ultimo registro:</p>
-                    <div className="text-sm p-2 bg-muted rounded">
+                    <div className="text-sm p-3 bg-muted rounded-lg">
                       <Badge className={getCategoryColor(patient.medical_history[0].category)} variant="secondary">
                         {getCategoryLabel(patient.medical_history[0].category)}
                       </Badge>
-                      <p className="mt-1 line-clamp-2">{patient.medical_history[0].description}</p>
+                      <p className="mt-2 line-clamp-2">{patient.medical_history[0].description}</p>
                     </div>
                   </div>
                 )}
@@ -324,7 +324,7 @@ export default function PatientsPage() {
                     className="flex-1"
                     onClick={() => handleStartSession(patient.id)}
                   >
-                    <MessageSquare className="mr-1 h-3 w-3" />
+                    <MessageSquare className="mr-2 h-4 w-4" />
                     Nueva Consulta
                   </Button>
                   <Button
@@ -335,11 +335,11 @@ export default function PatientsPage() {
                       setIsAddHistoryOpen(true)
                     }}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                   <Link href={`/dashboard/patients/${patient.id}`}>
                     <Button variant="outline" size="sm">
-                      <ChevronRight className="h-3 w-3" />
+                      <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
