@@ -165,7 +165,7 @@ ${historyText}`
 
     // Generate AI response with patient context
     const result = await generateObject({
-      model: google('gemini-2.0-flash-lite'),
+      model: google('gemini-3.1-flash-lite'),
       system: buildSystemPrompt(patientContext),
       messages: (allMessages || []).map((m) => ({
         role: m.role as 'user' | 'assistant',
@@ -192,7 +192,7 @@ ${historyText}`
         content: result.object.content,
         hash: aiHash,
         previous_hash: userHash,
-        model: 'gemini-2.0-flash-lite',
+        model: 'gemini-3.1-flash-lite',
         confidence_score: result.object.confidenceScore,
         risk_level: result.object.riskLevel,
         metadata: { reasoning: result.object.reasoning },
@@ -215,7 +215,7 @@ ${historyText}`
       details: {
         userMessageId: userMessage.id,
         aiMessageId: aiMessage.id,
-        model: 'gemini-2.0-flash-lite',
+        model: 'gemini-3.1-flash-lite',
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
         patientId: session.patient_id,
@@ -236,7 +236,7 @@ ${historyText}`
         timestamp: aiTimestamp,
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
-        model: 'gemini-2.0-flash-lite',
+        model: 'gemini-3.1-flash-lite',
       },
     })
   } catch (error) {
