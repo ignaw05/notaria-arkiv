@@ -11,9 +11,14 @@ export const arkivPublicClient = createPublicClient({
 
 // Wallet client for write operations (requires ARKIV_PRIVATE_KEY env var)
 export function getArkivWalletClient() {
-  const privateKey = process.env.ARKIV_PRIVATE_KEY
+  let privateKey = process.env.ARKIV_PRIVATE_KEY
   if (!privateKey) {
     throw new Error('ARKIV_PRIVATE_KEY environment variable is not set')
+  }
+  
+  // Add 0x prefix if not present
+  if (!privateKey.startsWith('0x')) {
+    privateKey = `0x${privateKey}`
   }
   
   return createWalletClient({
@@ -166,7 +171,8 @@ export async function queryArkivSessions(): Promise<string[]> {
  * Check if Arkiv is configured with a private key
  */
 export function isArkivConfigured(): boolean {
-  return !!process.env.ARKIV_PRIVATE_KEY
+  const key = process.env.ARKIV_PRIVATE_KEY
+  return !!key && key.length >= 64
 }
 
 /**

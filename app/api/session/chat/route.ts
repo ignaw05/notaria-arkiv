@@ -1,6 +1,10 @@
 import { generateObject } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { z } from 'zod'
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+})
 import { createClient } from '@/lib/supabase/server'
 import { generateMessageHash } from '@/lib/crypto'
 
@@ -161,7 +165,7 @@ ${historyText}`
 
     // Generate AI response with patient context
     const result = await generateObject({
-      model: google('gemini-2.0-flash-001'),
+      model: google('gemini-3.1-flash-lite'),
       system: buildSystemPrompt(patientContext),
       messages: (allMessages || []).map((m) => ({
         role: m.role as 'user' | 'assistant',
@@ -188,7 +192,7 @@ ${historyText}`
         content: result.object.content,
         hash: aiHash,
         previous_hash: userHash,
-        model: 'gemini-2.0-flash-001',
+        model: 'gemini-3.1-flash-lite',
         confidence_score: result.object.confidenceScore,
         risk_level: result.object.riskLevel,
         metadata: { reasoning: result.object.reasoning },
@@ -211,7 +215,7 @@ ${historyText}`
       details: {
         userMessageId: userMessage.id,
         aiMessageId: aiMessage.id,
-        model: 'gemini-2.0-flash-001',
+        model: 'gemini-3.1-flash-lite',
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
         patientId: session.patient_id,
@@ -232,11 +236,12 @@ ${historyText}`
         timestamp: aiTimestamp,
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
-        model: 'gemini-2.0-flash-001',
+        model: 'gemini-3.1-flash-lite',
       },
     })
   } catch (error) {
-    console.error('Chat API error:', error)
-    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+    console.error('[v0] Chat API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+    return Response.json({ error: 'Error interno del servidor', details: errorMessage }, { status: 500 })
   }
 }

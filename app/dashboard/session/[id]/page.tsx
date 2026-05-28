@@ -21,7 +21,8 @@ import {
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
   FileText, Hash, Calendar
 } from 'lucide-react'
-import { AuditResult } from '@/components/audit/audit-result'
+import { AuditResult as AuditResultComponent } from '@/components/audit/audit-result'
+import type { AuditResult as AuditResultType } from '@/lib/types'
 
 interface Message {
   id: string
@@ -106,7 +107,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [isSending, setIsSending] = useState(false)
   const [isSealing, setIsSealing] = useState(false)
   const [isAuditing, setIsAuditing] = useState(false)
-  const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
+  const [auditResult, setAuditResult] = useState<AuditResultType | null>(null)
   const [sealResult, setSealResult] = useState<{
     sessionHash: string
     arkivEntityKey: string | null
@@ -146,12 +147,33 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const handleSend = async () => {
     if (!input.trim() || isSending || !session?.is_active) return
 
+    const messageContent = input.trim()
+    setInput('')
+    
+    // Agregar mensaje del usuario inmediatamente (optimistic UI)
+    const tempUserMessageId = `temp-user-${Date.now()}`
+    const tempAiMessageId = `temp-ai-${Date.now()}`
+    
+    setMessages(prev => [
+      ...prev,
+      {
+        id: tempUserMessageId,
+        role: 'user',
+        content: messageContent,
+        hash: '',
+        previous_hash: prev.length > 0 ? prev[prev.length - 1].hash : null,
+        risk_level: null,
+        confidence_score: null,
+        created_at: new Date().toISOString(),
+      },
+    ])
+
     setIsSending(true)
     try {
       const res = await fetch('/api/session/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: id, prompt: input }),
+        body: JSON.stringify({ sessionId: id, prompt: messageContent }),
       })
 
       if (!res.ok) {
@@ -161,31 +183,37 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       const data = await res.json()
       
-      setMessages(prev => [
-        ...prev,
-        {
-          id: data.userMessage.id,
-          role: 'user',
-          content: data.userMessage.content,
-          hash: data.userMessage.hash,
-          previous_hash: prev.length > 0 ? prev[prev.length - 1].hash : null,
-          risk_level: null,
-          confidence_score: null,
-          created_at: data.userMessage.timestamp,
-        },
-        {
-          id: data.aiMessage.id,
-          role: 'assistant',
-          content: data.aiMessage.content,
-          hash: data.aiMessage.hash,
-          previous_hash: data.userMessage.hash,
-          risk_level: data.aiMessage.riskLevel,
-          confidence_score: data.aiMessage.confidenceScore,
-          created_at: data.aiMessage.timestamp,
-        },
-      ])
-      setInput('')
+      // Reemplazar mensaje temporal con los reales
+      setMessages(prev => {
+        // Quitar el mensaje temporal del usuario
+        const withoutTemp = prev.filter(m => m.id !== tempUserMessageId)
+        return [
+          ...withoutTemp,
+          {
+            id: data.userMessage.id,
+            role: 'user',
+            content: data.userMessage.content,
+            hash: data.userMessage.hash,
+            previous_hash: withoutTemp.length > 0 ? withoutTemp[withoutTemp.length - 1].hash : null,
+            risk_level: null,
+            confidence_score: null,
+            created_at: data.userMessage.timestamp,
+          },
+          {
+            id: data.aiMessage.id,
+            role: 'assistant',
+            content: data.aiMessage.content,
+            hash: data.aiMessage.hash,
+            previous_hash: data.userMessage.hash,
+            risk_level: data.aiMessage.riskLevel,
+            confidence_score: data.aiMessage.confidenceScore,
+            created_at: data.aiMessage.timestamp,
+          },
+        ]
+      })
     } catch (error) {
+      // En caso de error, quitar el mensaje temporal
+      setMessages(prev => prev.filter(m => m.id !== tempUserMessageId))
       toast.error(error instanceof Error ? error.message : 'Error al enviar mensaje')
     } finally {
       setIsSending(false)
@@ -345,7 +373,8 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               </p>
             </div>
           ) : (
-            messages.map((message) => (
+            <>
+            {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
@@ -391,7 +420,24 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                   </div>
                 )}
               </div>
-            ))
+            ))}
+            
+            {/* Typing indicator */}
+            {isSending && (
+              <div className="flex items-start gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                  <Bot className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <div className="bg-muted rounded-lg p-4">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -550,19 +596,19 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               {auditResult?.wasManipulated ? (
                 <>
                   <ShieldAlert className="h-5 w-5 text-destructive" />
-                  ⚠️ CONVERSACIÓN MANIPULADA
+                  Integridad Comprometida
                 </>
               ) : (
                 <>
                   <ShieldCheck className="h-5 w-5 text-green-600" />
-                  ✓ Conversación Válida
+                  Conversacion Integra
                 </>
               )}
             </DialogTitle>
           </DialogHeader>
           
           {auditResult && (
-            <AuditResult result={auditResult} />
+            <AuditResultComponent result={auditResult} />
           )}
 
           <DialogFooter>

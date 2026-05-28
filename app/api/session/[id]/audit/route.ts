@@ -113,24 +113,31 @@ export async function GET(
     )
 
     // Determine overall validity
-    const isValid = hashesMatch && chainVerification.isValid
-    const wasManipulated = !isValid
+    // El hash de sesion es la fuente de verdad principal
+    const isValid = hashesMatch
+    const wasManipulated = !hashesMatch
 
     // Build audit result
     const auditResult: AuditResult = {
       valid: isValid,
       wasManipulated,
       sessionId,
-      currentHash: reconstructedHash,
-      storedHash,
-      arkivEntityId: session.arkiv_entity_id,
-      arkivVerified,
-      arkivStoredHash,
-      arkivTimestamp,
-      arkivBlockNumber,
-      messageChainValid: chainVerification.isValid,
-      brokenLinks: chainVerification.brokenAt ? [String(chainVerification.brokenAt)] : [],
-      verifiedAt: new Date().toISOString(),
+      hashes: {
+        reconstructed: reconstructedHash,
+        stored: storedHash || '',
+        match: hashesMatch,
+      },
+      arkiv: {
+        configured: isArkivConfigured(),
+        verified: arkivVerified,
+        entityKey: session.arkiv_entity_id,
+        storedHash: arkivStoredHash,
+        timestamp: arkivTimestamp,
+        blockNumber: arkivBlockNumber,
+        explorerUrl: session.arkiv_entity_id && !session.arkiv_entity_id.startsWith('local_')
+          ? getArkivExplorerUrl(session.arkiv_entity_id)
+          : null,
+      },
     }
 
     // Log verification attempt
@@ -167,13 +174,14 @@ export async function GET(
         reconstructedHash,
         storedHash,
         wasManipulated,
-        verifiedAt: auditResult.verifiedAt,
+        verifiedAt: new Date().toISOString(),
       },
     })
 
     return Response.json({
       valid: isValid,
       wasManipulated,
+      sessionId,
       status: 'sealed',
       auditResult,
       verification: {

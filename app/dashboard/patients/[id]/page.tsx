@@ -139,7 +139,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   if (isLoading || !data?.patient) {
     return (
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -149,7 +149,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const patient = data.patient
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/patients">
           <Button variant="ghost" size="icon">
