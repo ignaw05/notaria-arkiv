@@ -60,15 +60,15 @@ export default function SignUpPage() {
             <h1 className="text-3xl font-bold text-foreground">NotarIA</h1>
           </div>
           <p className="text-muted-foreground">
-            Create your clinical account
+            Crea tu cuenta clínica
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Get started</CardTitle>
+            <CardTitle>Comenzar</CardTitle>
             <CardDescription>
-              Register to access AI-powered clinical decision support
+              Regístrate para acceder a soporte clínico de decisiones impulsado por IA
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSignUp}>
@@ -80,11 +80,11 @@ export default function SignUpPage() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">Nombre Completo</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Dr. Jane Smith"
+                  placeholder="Dra. Jane Smith"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -92,7 +92,7 @@ export default function SignUpPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Correo Electrónico</Label>
                 <Input
                   id="email"
                   type="email"
@@ -104,7 +104,7 @@ export default function SignUpPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
@@ -116,25 +116,25 @@ export default function SignUpPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">Rol</Label>
                 <Select value={role} onValueChange={setRole} disabled={isLoading}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
+                    <SelectValue placeholder="Selecciona tu rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="doctor">Doctor / Clinician</SelectItem>
+                    <SelectItem value="doctor">Médico / Clínico</SelectItem>
                     <SelectItem value="auditor">Auditor</SelectItem>
-                    <SelectItem value="compliance_officer">Compliance Officer</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
+                    <SelectItem value="compliance_officer">Oficial de Cumplimiento</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="institution">Institution</Label>
+                <Label htmlFor="institution">Institución</Label>
                 <Input
                   id="institution"
                   type="text"
-                  placeholder="General Hospital"
+                  placeholder="Hospital General"
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
                   disabled={isLoading}
@@ -146,16 +146,16 @@ export default function SignUpPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    Creando cuenta...
                   </>
                 ) : (
-                  'Create account'
+                  'Crear cuenta'
                 )}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                Already have an account?{' '}
+                ¿Ya tienes cuenta?{' '}
                 <Link href="/auth/login" className="text-primary hover:underline">
-                  Sign in
+                  Inicia sesión
                 </Link>
               </p>
             </CardFooter>
@@ -163,7 +163,7 @@ export default function SignUpPage() {
         </Card>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          By signing up, you agree to our Terms of Service and Privacy Policy
+          Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad
         </p>
       </div>
     </div>

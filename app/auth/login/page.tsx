@@ -47,15 +47,15 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-foreground">NotarIA</h1>
           </div>
           <p className="text-muted-foreground">
-            Arkiv Clinical Witness
+            Testigo Clínico Arkiv
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
+            <CardTitle>Bienvenido de Vuelta</CardTitle>
             <CardDescription>
-              Sign in to access your clinical AI assistant
+              Inicia sesión para acceder a tu asistente clínico de IA
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
@@ -67,7 +67,7 @@ export default function LoginPage() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Correo Electrónico</Label>
                 <Input
                   id="email"
                   type="email"
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
@@ -95,16 +95,16 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    Iniciando sesión...
                   </>
                 ) : (
-                  'Sign in'
+                  'Iniciar sesión'
                 )}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                {"Don't have an account? "}
+                {"¿No tienes cuenta? "}
                 <Link href="/auth/sign-up" className="text-primary hover:underline">
-                  Create one
+                  Crear una
                 </Link>
               </p>
             </CardFooter>
@@ -112,7 +112,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          All clinical interactions are recorded with immutable audit trails
+          Todas las interacciones clínicas se registran con registros de auditoría inmutables
         </p>
       </div>
     </div>
