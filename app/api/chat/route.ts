@@ -1,5 +1,5 @@
 import { streamText, generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     // Generate AI response with clinical assessment
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-20250514'),
+      model: google('gemini-2.0-flash-001'),
       system: CLINICAL_SYSTEM_PROMPT,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       resource_type: 'session',
       resource_id: sessionId,
       details: {
-        model: 'claude-sonnet-4-20250514',
+        model: 'gemini-2.0-flash-001',
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
       },
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
       riskLevel: result.object.riskLevel,
       confidenceScore: result.object.confidenceScore,
       reasoning: result.object.reasoning,
-      model: 'claude-sonnet-4-20250514',
+      model: 'gemini-2.0-flash-001',
     })
   } catch (error) {
     console.error('Chat API error:', error)
