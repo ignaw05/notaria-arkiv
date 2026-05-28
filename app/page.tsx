@@ -33,10 +33,10 @@ export default async function HomePage() {
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link href="/auth/login">Sign in</Link>
+              <Link href="/auth/login">Inicia sesión</Link>
             </Button>
             <Button asChild>
-              <Link href="/auth/sign-up">Get started</Link>
+              <Link href="/auth/sign-up">Comenzar</Link>
             </Button>
           </div>
         </div>
@@ -44,26 +44,26 @@ export default async function HomePage() {
 
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <Badge variant="secondary" className="mb-4">
-            Arkiv Clinical Witness
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance">
-            AI-Powered Clinical Decision Support with Immutable Audit Trails
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-            NotarIA provides healthcare professionals with intelligent clinical assistance while 
-            maintaining complete audit integrity through cryptographic hash chains. Every interaction 
-            is recorded, verified, and tamper-proof.
-          </p>
+        <Badge variant="secondary" className="mb-4">
+          Testigo Clínico Arkiv
+        </Badge>
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance">
+          Soporte de Decisiones Clínicas Impulsado por IA con Registros de Auditoría Inmutables
+        </h1>
+        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
+          NotarIA proporciona a los profesionales de la salud asistencia clínica inteligente mientras 
+          mantiene la integridad completa de auditoría mediante cadenas de hash criptográficas. Cada interacción 
+          se registra, verifica y es a prueba de manipulación.
+        </p>
           <div className="flex items-center justify-center gap-4">
             <Button size="lg" asChild>
               <Link href="/auth/sign-up">
-                Start Clinical Session
+                Iniciar Sesión Clínica
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/auth/login">View Demo</Link>
+              <Link href="/auth/login">Ver Demo</Link>
             </Button>
           </div>
         </div>
@@ -72,38 +72,38 @@ export default async function HomePage() {
       <section className="py-16 px-4 bg-muted/50">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-2xl font-bold text-center mb-12">
-            Built for Healthcare Compliance
+            Construido para el Cumplimiento Sanitario
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <FeatureCard
               icon={MessageSquare}
-              title="Clinical AI Assistant"
-              description="Get evidence-based clinical decision support powered by advanced AI, with real-time risk assessment and confidence scoring."
+              title="Asistente Clínico IA"
+              description="Obten soporte de decisiones clínicas basadas en evidencia impulsado por IA avanzada, con evaluación de riesgo en tiempo real y puntuación de confianza."
             />
             <FeatureCard
               icon={Fingerprint}
-              title="Cryptographic Integrity"
-              description="Every message is cryptographically hashed and chained, creating an immutable audit trail that proves data integrity."
+              title="Integridad Criptográfica"
+              description="Cada mensaje se hashea criptográficamente y se encadena, creando un registro de auditoría inmutable que prueba la integridad de los datos."
             />
             <FeatureCard
               icon={FileCheck}
-              title="Compliance Ready"
-              description="Purpose-built for healthcare regulations. Complete audit trails, role-based access, and verified session histories."
+              title="Listo para Cumplimiento"
+              description="Diseñado específicamente para regulaciones sanitarias. Registros de auditoría completos, acceso basado en roles e historiales de sesión verificados."
             />
             <FeatureCard
               icon={Lock}
-              title="Patient Privacy"
-              description="Patient identifiers are automatically anonymized using cryptographic hashing. No PHI is ever stored in plain text."
+              title="Privacidad del Paciente"
+              description="Los identificadores de pacientes se anonimiza automáticamente utilizando hash criptográfico. Nunca se almacena información de salud protegida en texto plano."
             />
             <FeatureCard
               icon={Users}
-              title="Role-Based Access"
-              description="Doctors, auditors, and compliance officers each have tailored interfaces designed for their specific workflows."
+              title="Acceso Basado en Roles"
+              description="Médicos, auditores y funcionarios de cumplimiento tienen interfaces adaptadas diseñadas para sus flujos de trabajo específicos."
             />
             <FeatureCard
               icon={Clock}
-              title="Real-Time Verification"
-              description="Auditors can verify any session in real-time, confirming the complete hash chain from first message to last."
+              title="Verificación en Tiempo Real"
+              description="Los auditores pueden verificar cualquier sesión en tiempo real, confirmando la cadena de hash completa desde el primer mensaje hasta el último."
             />
           </div>
         </div>
@@ -111,27 +111,27 @@ export default async function HomePage() {
 
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-2xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-2xl font-bold text-center mb-12">Cómo Funciona</h2>
           <div className="space-y-8">
             <StepCard
               number={1}
-              title="Start a Clinical Session"
-              description="Enter an anonymized patient identifier to begin. The system creates a new auditable session with a unique cryptographic chain."
+              title="Iniciar una Sesión Clínica"
+              description="Ingresa un identificador de paciente anonimizado para comenzar. El sistema crea una nueva sesión auditable con una cadena criptográfica única."
             />
             <StepCard
               number={2}
-              title="Consult with AI"
-              description="Describe the clinical situation and receive AI-powered recommendations with risk assessments and confidence scores."
+              title="Consultar con IA"
+              description="Describe la situación clínica y recibe recomendaciones impulsadas por IA con evaluaciones de riesgo y puntuaciones de confianza."
             />
             <StepCard
               number={3}
-              title="Every Message is Sealed"
-              description="Each message is hashed with SHA-256 and linked to the previous hash, creating an unbreakable chain of custody."
+              title="Cada Mensaje se Sella"
+              description="Cada mensaje se hashea con SHA-256 y se vincula al hash anterior, creando una cadena de custodia inquebrantable."
             />
             <StepCard
               number={4}
-              title="Verify Anytime"
-              description="Auditors can cryptographically verify any session, proving that no data has been modified since creation."
+              title="Verifica en Cualquier Momento"
+              description="Los auditores pueden verificar criptográficamente cualquier sesión, probando que ningún dato ha sido modificado desde su creación."
             />
           </div>
         </div>
@@ -140,14 +140,14 @@ export default async function HomePage() {
       <section className="py-16 px-4 bg-primary text-primary-foreground">
         <div className="container mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold mb-4">
-            Ready to Enhance Your Clinical Workflow?
+            ¿Listo para Mejorar tu Flujo de Trabajo Clínico?
           </h2>
           <p className="mb-8 opacity-90">
-            Join healthcare professionals who trust NotarIA for compliant AI-assisted clinical decision support.
+            Únete a profesionales de la salud que confían en NotarIA para soporte clínico asistido por IA conforme.
           </p>
           <Button size="lg" variant="secondary" asChild>
             <Link href="/auth/sign-up">
-              Create Your Account
+              Crear tu Cuenta
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -162,7 +162,7 @@ export default async function HomePage() {
             <span className="text-muted-foreground">by Arkiv Network</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Clinical AI with immutable audit trails. Built for healthcare compliance.
+            Asistencia Clínica de IA con registros de auditoría inmutables. Construido para cumplimiento sanitario.
           </p>
         </div>
       </footer>
