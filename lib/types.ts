@@ -131,6 +131,7 @@ export interface ChatMessage {
 // Audit types
 export interface AuditResult {
   valid: boolean
+  wasManipulated: boolean
   sessionId: string
   currentHash: string
   storedHash: string | null

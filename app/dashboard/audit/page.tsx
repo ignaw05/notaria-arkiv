@@ -64,15 +64,18 @@ export default async function AuditPage() {
         description="Monitor clinical AI sessions and verify integrity"
       />
       <div className="flex-1 overflow-auto p-6">
-        <AuditOverview
-          sessions={sessions || []}
-          stats={{
-            totalSessions: totalSessions || 0,
-            activeSessions: activeSessions || 0,
-            totalMessages: totalMessages || 0,
-            verifiedSessions: verifiedSessions || 0,
-          }}
-        />
+      <AuditOverview
+        sessions={sessions?.map(s => ({
+          ...s,
+          profiles: Array.isArray(s.profiles) ? s.profiles[0] : s.profiles
+        })) || []}
+        stats={{
+          totalSessions: totalSessions || 0,
+          activeSessions: activeSessions || 0,
+          totalMessages: totalMessages || 0,
+          verifiedSessions: verifiedSessions || 0,
+        }}
+      />
       </div>
     </div>
   )

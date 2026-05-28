@@ -129,7 +129,7 @@ export async function GET(
       arkivTimestamp,
       arkivBlockNumber,
       messageChainValid: chainVerification.isValid,
-      brokenLinks: chainVerification.brokenAt ? [chainVerification.brokenAt] : [],
+      brokenLinks: chainVerification.brokenAt ? [String(chainVerification.brokenAt)] : [],
       verifiedAt: new Date().toISOString(),
     }
 

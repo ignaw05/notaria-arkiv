@@ -97,7 +97,7 @@ export async function verifySessionOnArkiv(
 ): Promise<ArkivVerificationResult> {
   try {
     // Get entity from Arkiv Network
-    const entity = await arkivPublicClient.getEntity(entityKey)
+    const entity = await arkivPublicClient.getEntity(entityKey as `0x${string}`)
     
     if (!entity) {
       return {
