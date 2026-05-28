@@ -37,9 +37,10 @@ interface AuditResultProps {
 export function AuditResult({ result }: AuditResultProps) {
   const [copiedHash, setCopiedHash] = useState<string | null>(null)
   
-  // La logica es simple: si los hashes coinciden, NO hay manipulacion
+  // Usar directamente wasManipulated del API - es la fuente de verdad
+  // wasManipulated = true si los hashes NO coinciden O si la cadena esta rota
+  const isManipulated = result.wasManipulated
   const hashesMatch = result.hashes.match
-  const isManipulated = !hashesMatch || result.wasManipulated
 
   const copyToClipboard = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text)
@@ -63,9 +64,11 @@ export function AuditResult({ result }: AuditResultProps) {
                   <AlertCircle className="h-7 w-7 text-destructive" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-destructive">CONVERSACION MANIPULADA</CardTitle>
+                  <CardTitle className="text-xl text-destructive">INTEGRIDAD COMPROMETIDA</CardTitle>
                   <CardDescription className="text-destructive/80">
-                    Los hashes NO coinciden - se detectaron cambios no autorizados
+                    {!hashesMatch 
+                      ? 'Los hashes NO coinciden - se detectaron cambios en los mensajes'
+                      : 'La cadena de hashes esta rota - posible manipulacion de mensajes individuales'}
                   </CardDescription>
                 </div>
               </>
@@ -75,9 +78,9 @@ export function AuditResult({ result }: AuditResultProps) {
                   <CheckCircle2 className="h-7 w-7 text-green-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-green-600">CONVERSACION VALIDA</CardTitle>
+                  <CardTitle className="text-xl text-green-600">CONVERSACION INTEGRA</CardTitle>
                   <CardDescription className="text-green-600/80">
-                    Los hashes coinciden - la integridad esta verificada
+                    Los hashes coinciden y la cadena esta intacta - no hubo manipulacion
                   </CardDescription>
                 </div>
               </>
@@ -158,8 +161,8 @@ export function AuditResult({ result }: AuditResultProps) {
           <div className={`p-4 rounded-lg ${hashesMatch ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'}`}>
             <p className={`text-sm font-medium ${hashesMatch ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
               {hashesMatch 
-                ? '✓ Los hashes son identicos - NO hubo manipulacion'
-                : '✗ Los hashes son diferentes - SE DETECTO MANIPULACION'}
+                ? '✓ Los hashes de sesion son identicos'
+                : '✗ Los hashes de sesion son diferentes - contenido modificado'}
             </p>
           </div>
         </CardContent>

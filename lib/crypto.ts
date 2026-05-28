@@ -86,6 +86,8 @@ export async function verifyHashChain(
     
     // Check if previous_hash matches
     if (msg.previous_hash !== previousHash) {
+      console.log('[v0] Chain validation - previous_hash mismatch at', i)
+      console.log('[v0] Expected:', previousHash, 'Got:', msg.previous_hash)
       return {
         isValid: false,
         brokenAt: i,
@@ -102,6 +104,15 @@ export async function verifyHashChain(
     )
 
     if (computedHash !== msg.hash) {
+      console.log('[v0] Chain validation - hash mismatch at', i)
+      console.log('[v0] Computed:', computedHash)
+      console.log('[v0] Stored:', msg.hash)
+      console.log('[v0] Message data:', {
+        content: msg.content.substring(0, 50),
+        role: msg.role,
+        created_at: msg.created_at,
+        previous_hash: previousHash
+      })
       return {
         isValid: false,
         brokenAt: i,

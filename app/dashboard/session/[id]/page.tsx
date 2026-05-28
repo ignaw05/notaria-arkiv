@@ -595,12 +595,12 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               {auditResult?.wasManipulated ? (
                 <>
                   <ShieldAlert className="h-5 w-5 text-destructive" />
-                  ⚠️ CONVERSACIÓN MANIPULADA
+                  Integridad Comprometida
                 </>
               ) : (
                 <>
                   <ShieldCheck className="h-5 w-5 text-green-600" />
-                  ✓ Conversación Válida
+                  Conversacion Integra
                 </>
               )}
             </DialogTitle>
