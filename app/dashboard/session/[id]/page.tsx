@@ -65,10 +65,11 @@ interface AuditResult {
   arkiv: {
     configured: boolean
     verified: boolean
-    entityId: string | null
+    entityKey: string | null
     storedHash: string | null
     timestamp: number | null
     blockNumber: number | null
+    explorerUrl: string | null
   }
 }
 
@@ -511,13 +512,23 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
 
-              {auditResult.arkiv.entityId && (
+              {auditResult.arkiv.entityKey && !auditResult.arkiv.entityKey.startsWith('local_') && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Arkiv Network</p>
-                  <div className="bg-muted rounded p-3 font-mono text-xs">
-                    <p><span className="text-muted-foreground">Entity ID:</span> {auditResult.arkiv.entityId}</p>
+                  <div className="bg-muted rounded p-3 font-mono text-xs space-y-1">
+                    <p><span className="text-muted-foreground">Entity Key:</span> {auditResult.arkiv.entityKey.slice(0, 40)}...</p>
                     {auditResult.arkiv.blockNumber && (
                       <p><span className="text-muted-foreground">Bloque:</span> {auditResult.arkiv.blockNumber}</p>
+                    )}
+                    {auditResult.arkiv.explorerUrl && (
+                      <a 
+                        href={auditResult.arkiv.explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline block mt-2"
+                      >
+                        Ver en Arkiv Explorer
+                      </a>
                     )}
                   </div>
                 </div>

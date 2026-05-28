@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateHash, verifyHashChain } from '@/lib/crypto'
-import { verifySessionOnArkiv, isArkivConfigured } from '@/lib/arkiv'
+import { verifySessionOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
 import { NextRequest } from 'next/server'
 import type { AuditResult } from '@/lib/types'
 
@@ -189,10 +189,13 @@ export async function GET(
       arkiv: {
         configured: isArkivConfigured(),
         verified: arkivVerified,
-        entityId: session.arkiv_entity_id,
+        entityKey: session.arkiv_entity_id,
         storedHash: arkivStoredHash,
         timestamp: arkivTimestamp,
         blockNumber: arkivBlockNumber,
+        explorerUrl: session.arkiv_entity_id && !session.arkiv_entity_id.startsWith('local_')
+          ? getArkivExplorerUrl(session.arkiv_entity_id)
+          : null,
       },
       session: {
         id: sessionId,

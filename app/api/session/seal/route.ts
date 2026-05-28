@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateHash } from '@/lib/crypto'
-import { registerSessionOnArkiv, isArkivConfigured } from '@/lib/arkiv'
+import { registerSessionOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
 
 export async function POST(req: Request) {
   try {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const sessionHash = await generateHash(conversationString)
 
     const closedAt = new Date().toISOString()
-    let arkivEntityId: string | null = null
+    let arkivEntityKey: string | null = null
     let arkivTxHash: string | null = null
 
     // Register on Arkiv Network if configured
@@ -77,16 +77,17 @@ export async function POST(req: Request) {
             sealedAt: closedAt,
           }
         )
-        arkivEntityId = arkivResult.entityId
+        arkivEntityKey = arkivResult.entityKey
         arkivTxHash = arkivResult.txHash
+        console.log('[Arkiv] Session registered:', arkivEntityKey, arkivTxHash)
       } catch (arkivError) {
         console.error('[Arkiv] Error registering session:', arkivError)
         // Continue without Arkiv - store hash locally at minimum
       }
     } else {
       console.log('[Arkiv] Not configured - storing hash locally only')
-      // Generate a local-only entity ID for tracking
-      arkivEntityId = `local_${sessionId}_${Date.now()}`
+      // Generate a local-only entity key for tracking
+      arkivEntityKey = `local_${sessionId}_${Date.now()}`
     }
 
     // Update session: mark as sealed
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
         is_active: false,
         closed_at: closedAt,
         session_hash: sessionHash,
-        arkiv_entity_id: arkivEntityId,
+        arkiv_entity_id: arkivEntityKey,
         updated_at: closedAt,
       })
       .eq('id', sessionId)
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
       resource_id: sessionId,
       details: {
         sessionHash,
-        arkivEntityId,
+        arkivEntityKey,
         arkivTxHash,
         arkivConfigured: isArkivConfigured(),
         messageCount: messages.length,
@@ -127,9 +128,13 @@ export async function POST(req: Request) {
       success: true,
       sessionId,
       sessionHash,
-      arkivEntityId,
+      arkivEntityKey,
       arkivTxHash,
       arkivConfigured: isArkivConfigured(),
+      arkivExplorerUrl: arkivEntityKey && !arkivEntityKey.startsWith('local_') 
+        ? getArkivExplorerUrl(arkivEntityKey) 
+        : null,
+      arkivTxUrl: arkivTxHash ? getArkivTxUrl(arkivTxHash) : null,
       messageCount: messages.length,
       closedAt,
     })

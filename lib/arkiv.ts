@@ -1,15 +1,16 @@
 import { createPublicClient, createWalletClient, http } from '@arkiv-network/sdk'
 import { privateKeyToAccount } from '@arkiv-network/sdk/accounts'
 import { braga } from '@arkiv-network/sdk/chains'
+import { jsonToPayload } from '@arkiv-network/sdk/utils'
 
-// Public client for read operations
-export const publicClient = createPublicClient({
+// Public client for read operations (safe for frontend)
+export const arkivPublicClient = createPublicClient({
   chain: braga,
   transport: http(),
 })
 
 // Wallet client for write operations (requires ARKIV_PRIVATE_KEY env var)
-export function getWalletClient() {
+export function getArkivWalletClient() {
   const privateKey = process.env.ARKIV_PRIVATE_KEY
   if (!privateKey) {
     throw new Error('ARKIV_PRIVATE_KEY environment variable is not set')
@@ -23,25 +24,29 @@ export function getWalletClient() {
 }
 
 // Types for Arkiv entities
-export interface ArkivEntity {
-  id: string
+export interface ArkivSessionPayload {
+  type: 'clinical_session'
+  sessionId: string
   hash: string
-  timestamp: number
-  metadata?: Record<string, unknown>
+  doctorId: string
+  patientId: string
+  messageCount: number
+  sealedAt: string
 }
 
 export interface ArkivVerificationResult {
   valid: boolean
-  entityId: string
+  entityKey: string
   storedHash: string
   currentHash: string
   timestamp: number
   blockNumber?: number
+  txHash?: string
 }
 
 /**
- * Register a session hash on Arkiv Network
- * Returns the entity ID for future verification
+ * Register a session hash on Arkiv Network using createEntity
+ * Returns the entity key for future verification
  */
 export async function registerSessionOnArkiv(
   sessionId: string,
@@ -52,80 +57,74 @@ export async function registerSessionOnArkiv(
     messageCount: number
     sealedAt: string
   }
-): Promise<{ entityId: string; txHash: string }> {
-  const walletClient = getWalletClient()
+): Promise<{ entityKey: string; txHash: string }> {
+  const walletClient = getArkivWalletClient()
   
-  // Create the data payload
-  const payload = {
+  // Create the payload for the entity
+  const payload: ArkivSessionPayload = {
     type: 'clinical_session',
     sessionId,
     hash: sessionHash,
-    metadata,
-    timestamp: Date.now(),
+    doctorId: metadata.doctorId,
+    patientId: metadata.patientId,
+    messageCount: metadata.messageCount,
+    sealedAt: metadata.sealedAt,
   }
   
-  // Convert to hex for on-chain storage
-  const dataHex = `0x${Buffer.from(JSON.stringify(payload)).toString('hex')}` as `0x${string}`
-  
-  // Send transaction to Arkiv Network
-  const txHash = await walletClient.sendTransaction({
-    to: walletClient.account.address, // Self-referential for data anchoring
-    data: dataHex,
-    value: BigInt(0),
+  // Create entity on Arkiv Network
+  const { entityKey, txHash } = await walletClient.createEntity({
+    payload: jsonToPayload(payload),
+    contentType: 'application/json',
+    attributes: [
+      { key: 'type', value: 'clinical_session' },
+      { key: 'sessionId', value: sessionId },
+      { key: 'hash', value: sessionHash },
+      { key: 'app', value: 'notaria' },
+    ],
+    expiresIn: 31536000, // 1 year in seconds
   })
   
-  // The entity ID is derived from the transaction hash
-  const entityId = `arkiv:${txHash}`
-  
-  return { entityId, txHash }
+  return { entityKey, txHash }
 }
 
 /**
  * Verify a session hash against Arkiv Network
- * Returns verification result with tampering detection
+ * Fetches the entity and compares the stored hash with current hash
  */
 export async function verifySessionOnArkiv(
-  entityId: string,
+  entityKey: string,
   currentHash: string
 ): Promise<ArkivVerificationResult> {
-  // Extract transaction hash from entity ID
-  const txHash = entityId.replace('arkiv:', '') as `0x${string}`
-  
   try {
-    // Get transaction from chain
-    const tx = await publicClient.getTransaction({ hash: txHash })
+    // Get entity from Arkiv Network
+    const entity = await arkivPublicClient.getEntity(entityKey)
     
-    if (!tx || !tx.input) {
+    if (!entity) {
       return {
         valid: false,
-        entityId,
+        entityKey,
         storedHash: '',
         currentHash,
         timestamp: 0,
       }
     }
     
-    // Decode the stored data
-    const dataHex = tx.input.slice(2) // Remove 0x prefix
-    const dataJson = Buffer.from(dataHex, 'hex').toString('utf8')
-    const storedData = JSON.parse(dataJson)
-    
-    // Get block for timestamp
-    const block = await publicClient.getBlock({ blockNumber: tx.blockNumber! })
+    // Parse the stored JSON payload
+    const storedData = entity.toJSON() as ArkivSessionPayload
     
     return {
       valid: storedData.hash === currentHash,
-      entityId,
+      entityKey,
       storedHash: storedData.hash,
       currentHash,
-      timestamp: Number(block.timestamp) * 1000,
-      blockNumber: Number(tx.blockNumber),
+      timestamp: Date.now(), // Entity doesn't expose timestamp directly
+      blockNumber: undefined,
     }
   } catch (error) {
-    console.error('[v0] Arkiv verification error:', error)
+    console.error('[Arkiv] Verification error:', error)
     return {
       valid: false,
-      entityId,
+      entityKey,
       storedHash: '',
       currentHash,
       timestamp: 0,
@@ -134,8 +133,52 @@ export async function verifySessionOnArkiv(
 }
 
 /**
- * Check if Arkiv is configured
+ * Query all sessions for a specific app (NotarIA)
+ */
+export async function queryArkivSessions(): Promise<string[]> {
+  // Using JSON-RPC query to find all NotarIA sessions
+  const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
+  
+  try {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'arkiv_query',
+        params: [
+          'app = "notaria" && type = "clinical_session"',
+          { resultsPerPage: '0x64' }, // 100 results
+        ],
+      }),
+    })
+    
+    const data = await response.json()
+    return data.result?.entities?.map((e: { key: string }) => e.key) || []
+  } catch (error) {
+    console.error('[Arkiv] Query error:', error)
+    return []
+  }
+}
+
+/**
+ * Check if Arkiv is configured with a private key
  */
 export function isArkivConfigured(): boolean {
   return !!process.env.ARKIV_PRIVATE_KEY
+}
+
+/**
+ * Get Arkiv explorer URL for an entity
+ */
+export function getArkivExplorerUrl(entityKey: string): string {
+  return `https://data.arkiv.network/entity/${entityKey}`
+}
+
+/**
+ * Get Arkiv transaction explorer URL
+ */
+export function getArkivTxUrl(txHash: string): string {
+  return `https://explorer.braga.hoodi.arkiv.network/tx/${txHash}`
 }
