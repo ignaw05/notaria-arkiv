@@ -119,6 +119,7 @@ export async function GET(
     // Build audit result
     const auditResult: AuditResult = {
       valid: isValid,
+      wasManipulated,
       sessionId,
       currentHash: reconstructedHash,
       storedHash,

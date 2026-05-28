@@ -43,7 +43,7 @@ export function SessionList({ sessions, userId }: SessionListProps) {
   const filteredSessions = sessions.filter(
     (session) =>
       session.title?.toLowerCase().includes(search.toLowerCase()) ||
-      session.patient_hash.toLowerCase().includes(search.toLowerCase())
+      session.patient_hash?.toLowerCase().includes(search.toLowerCase())
   )
 
   if (sessions.length === 0) {

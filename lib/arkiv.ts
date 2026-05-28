@@ -110,7 +110,7 @@ export async function verifySessionOnArkiv(
     }
     
     // Parse the stored JSON payload
-    const storedData = entity.toJSON() as ArkivSessionPayload
+    const storedData = entity.toJson() as ArkivSessionPayload
     
     return {
       valid: storedData.hash === currentHash,

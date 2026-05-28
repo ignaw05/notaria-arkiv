@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, use } from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 import { 
   ArrowLeft, Send, Shield, ShieldCheck, ShieldX, ShieldAlert, 
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
