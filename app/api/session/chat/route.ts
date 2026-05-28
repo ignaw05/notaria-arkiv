@@ -4,61 +4,118 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { generateMessageHash } from '@/lib/crypto'
 
-const CLINICAL_SYSTEM_PROMPT = `You are a clinical AI assistant designed to support healthcare professionals with evidence-based guidance. Your role is to:
+function buildSystemPrompt(patientContext: string | null) {
+  const basePrompt = `Eres un asistente clinico de IA disenado para apoyar a profesionales de la salud con orientacion basada en evidencia. Tu rol es:
 
-1. Provide clinical decision support based on established medical guidelines
-2. Help analyze patient symptoms and suggest differential diagnoses
-3. Recommend appropriate diagnostic tests and treatment considerations
-4. Flag potential drug interactions or contraindications
-5. Suggest relevant clinical guidelines and best practices
+1. Proporcionar soporte en decisiones clinicas basado en guias medicas establecidas
+2. Ayudar a analizar sintomas del paciente y sugerir diagnosticos diferenciales
+3. Recomendar pruebas diagnosticas apropiadas y consideraciones de tratamiento
+4. Senalar potenciales interacciones medicamentosas o contraindicaciones
+5. Sugerir guias clinicas relevantes y mejores practicas
 
-IMPORTANT GUIDELINES:
-- Always emphasize that final clinical decisions rest with the treating physician
-- Cite relevant medical guidelines when applicable
-- Flag high-risk situations clearly
-- Never provide specific dosing without verification
-- Recommend consultation with specialists when appropriate
-- Maintain patient confidentiality at all times
+LINEAMIENTOS IMPORTANTES:
+- Siempre enfatiza que las decisiones clinicas finales recaen en el medico tratante
+- Cita guias medicas relevantes cuando sea aplicable
+- Senala claramente situaciones de alto riesgo
+- Nunca proporciones dosificaciones especificas sin verificacion
+- Recomienda consulta con especialistas cuando sea apropiado
+- Mantén la confidencialidad del paciente en todo momento
 
-For each response, internally assess:
-- Risk Level: low, medium, high, or critical based on clinical urgency
-- Confidence Score: your confidence in the recommendation (0-1)
+Para cada respuesta, evalua internamente:
+- Nivel de Riesgo: bajo, medio, alto o critico basado en urgencia clinica
+- Puntuacion de Confianza: tu confianza en la recomendacion (0-1)
 
-Format your responses clearly and professionally for clinical documentation.`
+Formatea tus respuestas de manera clara y profesional para documentacion clinica.
+Responde siempre en espanol.`
+
+  if (patientContext) {
+    return `${basePrompt}
+
+CONTEXTO DEL PACIENTE:
+${patientContext}
+
+Usa esta informacion del paciente para contextualizar tus respuestas y recomendaciones.`
+  }
+
+  return basePrompt
+}
+
+function calculateAge(dateOfBirth: string): number {
+  const today = new Date()
+  const birth = new Date(dateOfBirth)
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
+}
 
 export async function POST(req: Request) {
   try {
     const { sessionId, prompt } = await req.json()
 
     if (!sessionId || !prompt) {
-      return Response.json({ error: 'sessionId and prompt are required' }, { status: 400 })
+      return Response.json({ error: 'sessionId y prompt son requeridos' }, { status: 400 })
     }
 
-    // Verify authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Verify session exists and belongs to user
+    // Get session with patient info
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('*')
+      .select(`
+        *,
+        patients (
+          id,
+          full_name,
+          date_of_birth,
+          notes
+        )
+      `)
       .eq('id', sessionId)
       .single()
 
     if (sessionError || !session) {
-      return Response.json({ error: 'Session not found' }, { status: 404 })
+      return Response.json({ error: 'Sesion no encontrada' }, { status: 404 })
     }
 
     if (session.doctor_id !== user.id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     if (!session.is_active) {
-      return Response.json({ error: 'Session is sealed and cannot receive new messages' }, { status: 400 })
+      return Response.json({ error: 'La sesion esta sellada y no puede recibir nuevos mensajes' }, { status: 400 })
+    }
+
+    // Build patient context with medical history
+    let patientContext: string | null = null
+    if (session.patient_id && session.patients) {
+      const patient = session.patients as { id: string; full_name: string; date_of_birth: string; notes: string | null }
+      const age = calculateAge(patient.date_of_birth)
+
+      // Get medical history
+      const { data: history } = await supabase
+        .from('medical_history')
+        .select('entry_date, description, category')
+        .eq('patient_id', session.patient_id)
+        .order('entry_date', { ascending: false })
+
+      const historyText = history?.map(h => 
+        `- [${h.entry_date}] (${h.category || 'general'}): ${h.description}`
+      ).join('\n') || 'Sin historial medico registrado'
+
+      patientContext = `Paciente: ${patient.full_name}
+Edad: ${age} años (Nacimiento: ${patient.date_of_birth})
+${patient.notes ? `Notas: ${patient.notes}` : ''}
+
+HISTORIAL MEDICO:
+${historyText}`
     }
 
     // Get last message hash for chain
@@ -92,7 +149,7 @@ export async function POST(req: Request) {
 
     if (userMsgError) {
       console.error('Error saving user message:', userMsgError)
-      return Response.json({ error: 'Failed to save message' }, { status: 500 })
+      return Response.json({ error: 'Error al guardar mensaje' }, { status: 500 })
     }
 
     // Get all messages for context
@@ -102,19 +159,19 @@ export async function POST(req: Request) {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
 
-    // Generate AI response
+    // Generate AI response with patient context
     const result = await generateObject({
       model: google('gemini-2.0-flash-001'),
-      system: CLINICAL_SYSTEM_PROMPT,
+      system: buildSystemPrompt(patientContext),
       messages: (allMessages || []).map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
       schema: z.object({
-        content: z.string().describe('The clinical response to the user'),
-        riskLevel: z.enum(['low', 'medium', 'high', 'critical']).describe('Clinical risk assessment'),
-        confidenceScore: z.number().min(0).max(1).describe('Confidence in the recommendation'),
-        reasoning: z.string().describe('Internal reasoning for audit purposes'),
+        content: z.string().describe('La respuesta clinica al usuario'),
+        riskLevel: z.enum(['low', 'medium', 'high', 'critical']).describe('Evaluacion de riesgo clinico'),
+        confidenceScore: z.number().min(0).max(1).describe('Confianza en la recomendacion'),
+        reasoning: z.string().describe('Razonamiento interno para propositos de auditoria'),
       }),
     })
 
@@ -142,7 +199,7 @@ export async function POST(req: Request) {
 
     if (aiMsgError) {
       console.error('Error saving AI message:', aiMsgError)
-      return Response.json({ error: 'Failed to save AI response' }, { status: 500 })
+      return Response.json({ error: 'Error al guardar respuesta de IA' }, { status: 500 })
     }
 
     // Log to audit
@@ -157,6 +214,7 @@ export async function POST(req: Request) {
         model: 'gemini-2.0-flash-001',
         riskLevel: result.object.riskLevel,
         confidenceScore: result.object.confidenceScore,
+        patientId: session.patient_id,
       },
     })
 
@@ -179,6 +237,6 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error('Chat API error:', error)
-    return Response.json({ error: 'Internal Server Error' }, { status: 500 })
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

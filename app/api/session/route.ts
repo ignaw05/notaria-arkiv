@@ -1,40 +1,39 @@
 import { createClient } from '@/lib/supabase/server'
-import { generatePatientHash } from '@/lib/crypto'
 
 export async function POST(req: Request) {
   try {
     const { patientId, title } = await req.json()
 
     if (!patientId) {
-      return Response.json({ error: 'patientId is required' }, { status: 400 })
+      return Response.json({ error: 'patientId es requerido' }, { status: 400 })
     }
 
-    // Verify authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Get user profile for institution
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('institution')
-      .eq('id', user.id)
+    // Verify patient belongs to doctor
+    const { data: patient, error: patientError } = await supabase
+      .from('patients')
+      .select('id, full_name')
+      .eq('id', patientId)
+      .eq('doctor_id', user.id)
       .single()
 
-    // Generate anonymized patient hash
-    const institutionSalt = profile?.institution || 'default'
-    const patientHash = await generatePatientHash(patientId, institutionSalt)
+    if (patientError || !patient) {
+      return Response.json({ error: 'Paciente no encontrado' }, { status: 404 })
+    }
 
-    // Create new session
+    // Create new session linked to patient
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .insert({
         doctor_id: user.id,
-        patient_hash: patientHash,
-        title: title || `Consulta ${new Date().toLocaleDateString()}`,
+        patient_id: patientId,
+        title: title || `Consulta - ${patient.full_name} - ${new Date().toLocaleDateString('es-AR')}`,
         is_active: true,
       })
       .select()
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
 
     if (sessionError) {
       console.error('Error creating session:', sessionError)
-      return Response.json({ error: 'Failed to create session' }, { status: 500 })
+      return Response.json({ error: 'Error al crear sesion' }, { status: 500 })
     }
 
     // Log to audit
@@ -52,7 +51,8 @@ export async function POST(req: Request) {
       resource_type: 'session',
       resource_id: session.id,
       details: {
-        patientHash,
+        patientId,
+        patientName: patient.full_name,
         title: session.title,
       },
     })
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       success: true,
       session: {
         id: session.id,
-        patientHash: session.patient_hash,
+        patientId: session.patient_id,
         title: session.title,
         startedAt: session.started_at,
         isActive: session.is_active,
@@ -69,34 +69,40 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error('Create session API error:', error)
-    return Response.json({ error: 'Internal Server Error' }, { status: 500 })
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 
 export async function GET() {
   try {
-    // Verify authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Get user's sessions
+    // Get user's sessions with patient info
     const { data: sessions, error } = await supabase
       .from('sessions')
-      .select('*')
+      .select(`
+        *,
+        patients (
+          id,
+          full_name,
+          date_of_birth
+        )
+      `)
       .eq('doctor_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
-      return Response.json({ error: 'Failed to fetch sessions' }, { status: 500 })
+      return Response.json({ error: 'Error al obtener sesiones' }, { status: 500 })
     }
 
     return Response.json({ sessions })
   } catch (error) {
     console.error('Get sessions API error:', error)
-    return Response.json({ error: 'Internal Server Error' }, { status: 500 })
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

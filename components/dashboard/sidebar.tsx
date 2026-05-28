@@ -38,6 +38,7 @@ import {
   LogOut,
   ChevronUp,
   FileCheck,
+  Users,
 } from 'lucide-react'
 
 interface DashboardSidebarProps {
@@ -46,19 +47,20 @@ interface DashboardSidebarProps {
 }
 
 const doctorNavItems = [
-  { title: 'New Session', href: '/dashboard', icon: MessageSquarePlus },
-  { title: 'Session History', href: '/dashboard/history', icon: History },
+  { title: 'Pacientes', href: '/dashboard/patients', icon: Users },
+  { title: 'Nueva Sesion', href: '/dashboard', icon: MessageSquarePlus },
+  { title: 'Historial', href: '/dashboard/history', icon: History },
 ]
 
 const auditorNavItems = [
-  { title: 'Audit Dashboard', href: '/dashboard/audit', icon: ClipboardCheck },
-  { title: 'Verify Session', href: '/dashboard/audit/verify', icon: FileCheck },
-  { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { title: 'Panel de Auditoria', href: '/dashboard/audit', icon: ClipboardCheck },
+  { title: 'Verificar Sesion', href: '/dashboard/audit/verify', icon: FileCheck },
+  { title: 'Analiticas', href: '/dashboard/analytics', icon: BarChart3 },
 ]
 
 const adminNavItems = [
-  { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { title: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { title: 'Analiticas', href: '/dashboard/analytics', icon: BarChart3 },
+  { title: 'Configuracion', href: '/dashboard/settings', icon: Settings },
 ]
 
 export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
@@ -106,7 +108,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
         {/* Doctor/Clinician Nav */}
         {(role === 'doctor' || role === 'admin') && (
           <SidebarGroup>
-            <SidebarGroupLabel>Clinical</SidebarGroupLabel>
+            <SidebarGroupLabel>Clinico</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {doctorNavItems.map((item) => (
@@ -127,7 +129,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
         {/* Auditor Nav */}
         {(role === 'auditor' || role === 'compliance_officer' || role === 'admin') && (
           <SidebarGroup>
-            <SidebarGroupLabel>Audit & Compliance</SidebarGroupLabel>
+            <SidebarGroupLabel>Auditoria y Compliance</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {auditorNavItems.map((item) => (
@@ -148,7 +150,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
         {/* Admin Nav */}
         {role === 'admin' && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupLabel>Administracion</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminNavItems.map((item) => (
@@ -200,13 +202,13 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    Configuracion
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  Cerrar sesion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

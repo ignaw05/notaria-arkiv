@@ -16,10 +16,31 @@ export interface Profile {
   updated_at: string
 }
 
+export interface Patient {
+  id: string
+  doctor_id: string
+  full_name: string
+  date_of_birth: string
+  identifier: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MedicalHistoryEntry {
+  id: string
+  patient_id: string
+  entry_date: string
+  description: string
+  category: 'diagnosis' | 'treatment' | 'surgery' | 'allergy' | 'medication' | 'other' | null
+  created_at: string
+}
+
 export interface Session {
   id: string
   doctor_id: string
-  patient_hash: string
+  patient_id: string | null
+  patient_hash: string | null
   title: string | null
   started_at: string
   closed_at: string | null
@@ -84,6 +105,12 @@ export interface IntegrityVerification {
 export interface SessionWithMessages extends Session {
   messages: Message[]
   decisions: Decision[]
+  patient?: Patient
+}
+
+export interface PatientWithHistory extends Patient {
+  medical_history: MedicalHistoryEntry[]
+  sessions?: Session[]
 }
 
 export interface MessageWithHash extends Message {
@@ -99,4 +126,20 @@ export interface ChatMessage {
   hash?: string
   riskLevel?: SeverityLevel
   confidenceScore?: number
+}
+
+// Audit types
+export interface AuditResult {
+  valid: boolean
+  sessionId: string
+  currentHash: string
+  storedHash: string | null
+  arkivEntityId: string | null
+  arkivVerified: boolean
+  arkivStoredHash: string | null
+  arkivTimestamp: number | null
+  arkivBlockNumber: number | null
+  messageChainValid: boolean
+  brokenLinks: string[]
+  verifiedAt: string
 }

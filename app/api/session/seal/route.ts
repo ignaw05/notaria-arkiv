@@ -1,54 +1,39 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateHash } from '@/lib/crypto'
-
-// Arkiv SDK mock - replace with actual SDK when available
-async function createArkivEntity(data: {
-  type: string
-  attributes: Record<string, unknown>
-}): Promise<{ entityId: string }> {
-  // TODO: Replace with actual Arkiv SDK call
-  // const arkiv = new ArkivClient(process.env.ARKIV_API_KEY)
-  // return await arkiv.createEntity(data)
-  
-  // Mock implementation for demo
-  const entityId = `arkiv_${Date.now()}_${Math.random().toString(36).substring(7)}`
-  console.log('[Arkiv] Creating entity:', { entityId, ...data })
-  return { entityId }
-}
+import { registerSessionOnArkiv, isArkivConfigured } from '@/lib/arkiv'
 
 export async function POST(req: Request) {
   try {
     const { sessionId } = await req.json()
 
     if (!sessionId) {
-      return Response.json({ error: 'sessionId is required' }, { status: 400 })
+      return Response.json({ error: 'sessionId es requerido' }, { status: 400 })
     }
 
-    // Verify authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Get session
+    // Get session with patient info
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('*')
+      .select('*, patients(id, full_name)')
       .eq('id', sessionId)
       .single()
 
     if (sessionError || !session) {
-      return Response.json({ error: 'Session not found' }, { status: 404 })
+      return Response.json({ error: 'Sesion no encontrada' }, { status: 404 })
     }
 
     if (session.doctor_id !== user.id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return Response.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     if (!session.is_active) {
-      return Response.json({ error: 'Session is already sealed' }, { status: 400 })
+      return Response.json({ error: 'La sesion ya esta sellada' }, { status: 400 })
     }
 
     // Get all messages ordered by creation date
@@ -59,11 +44,11 @@ export async function POST(req: Request) {
       .order('created_at', { ascending: true })
 
     if (messagesError) {
-      return Response.json({ error: 'Failed to fetch messages' }, { status: 500 })
+      return Response.json({ error: 'Error al obtener mensajes' }, { status: 500 })
     }
 
     if (!messages || messages.length === 0) {
-      return Response.json({ error: 'Cannot seal empty session' }, { status: 400 })
+      return Response.json({ error: 'No se puede sellar una sesion vacia' }, { status: 400 })
     }
 
     // Generate standardized conversation string
@@ -75,35 +60,50 @@ export async function POST(req: Request) {
     // Generate SHA-256 hash of the entire conversation
     const sessionHash = await generateHash(conversationString)
 
-    // Register hash in Arkiv Network
-    const arkivEntity = await createArkivEntity({
-      type: 'ClinicalSession',
-      attributes: {
-        chatHash: sessionHash,
-        verifiedUser: user.id,
-        sessionId: sessionId,
-        messageCount: messages.length,
-        timestamp: Date.now(),
-        patientHash: session.patient_hash,
-      },
-    })
+    const closedAt = new Date().toISOString()
+    let arkivEntityId: string | null = null
+    let arkivTxHash: string | null = null
+
+    // Register on Arkiv Network if configured
+    if (isArkivConfigured()) {
+      try {
+        const arkivResult = await registerSessionOnArkiv(
+          sessionId,
+          sessionHash,
+          {
+            doctorId: user.id,
+            patientId: session.patient_id || 'anonymous',
+            messageCount: messages.length,
+            sealedAt: closedAt,
+          }
+        )
+        arkivEntityId = arkivResult.entityId
+        arkivTxHash = arkivResult.txHash
+      } catch (arkivError) {
+        console.error('[Arkiv] Error registering session:', arkivError)
+        // Continue without Arkiv - store hash locally at minimum
+      }
+    } else {
+      console.log('[Arkiv] Not configured - storing hash locally only')
+      // Generate a local-only entity ID for tracking
+      arkivEntityId = `local_${sessionId}_${Date.now()}`
+    }
 
     // Update session: mark as sealed
-    const closedAt = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('sessions')
       .update({
         is_active: false,
         closed_at: closedAt,
         session_hash: sessionHash,
-        arkiv_entity_id: arkivEntity.entityId,
+        arkiv_entity_id: arkivEntityId,
         updated_at: closedAt,
       })
       .eq('id', sessionId)
 
     if (updateError) {
       console.error('Error sealing session:', updateError)
-      return Response.json({ error: 'Failed to seal session' }, { status: 500 })
+      return Response.json({ error: 'Error al sellar sesion' }, { status: 500 })
     }
 
     // Log to audit
@@ -114,9 +114,12 @@ export async function POST(req: Request) {
       resource_id: sessionId,
       details: {
         sessionHash,
-        arkivEntityId: arkivEntity.entityId,
+        arkivEntityId,
+        arkivTxHash,
+        arkivConfigured: isArkivConfigured(),
         messageCount: messages.length,
         closedAt,
+        patientId: session.patient_id,
       },
     })
 
@@ -124,12 +127,14 @@ export async function POST(req: Request) {
       success: true,
       sessionId,
       sessionHash,
-      arkivEntityId: arkivEntity.entityId,
+      arkivEntityId,
+      arkivTxHash,
+      arkivConfigured: isArkivConfigured(),
       messageCount: messages.length,
       closedAt,
     })
   } catch (error) {
     console.error('Seal API error:', error)
-    return Response.json({ error: 'Internal Server Error' }, { status: 500 })
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
