@@ -17,10 +17,7 @@ import {
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
   FileText, Hash, Calendar
 } from 'lucide-react'
-import Link from 'next/link'
-import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import { AuditResult } from '@/components/audit/audit-result'
 
 interface Message {
   id: string
@@ -439,101 +436,25 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       {/* Audit Result Dialog */}
       <Dialog open={showAuditDialog} onOpenChange={setShowAuditDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {auditResult?.valid ? (
+              {auditResult?.wasManipulated ? (
                 <>
-                  <ShieldCheck className="h-5 w-5 text-green-600" />
-                  Verificacion Exitosa
+                  <ShieldAlert className="h-5 w-5 text-destructive" />
+                  ⚠️ CONVERSACIÓN MANIPULADA
                 </>
               ) : (
                 <>
-                  <ShieldX className="h-5 w-5 text-red-600" />
-                  Manipulacion Detectada
+                  <ShieldCheck className="h-5 w-5 text-green-600" />
+                  ✓ Conversación Válida
                 </>
               )}
             </DialogTitle>
           </DialogHeader>
           
           {auditResult && (
-            <div className="space-y-4">
-              {/* Main Result */}
-              <Alert variant={auditResult.valid ? 'default' : 'destructive'}>
-                {auditResult.valid ? (
-                  <CheckCircle className="h-4 w-4" />
-                ) : (
-                  <XCircle className="h-4 w-4" />
-                )}
-                <AlertTitle>
-                  {auditResult.valid 
-                    ? 'La conversacion no ha sido manipulada'
-                    : 'Se detectaron modificaciones en la conversacion'}
-                </AlertTitle>
-                <AlertDescription>
-                  {auditResult.valid
-                    ? 'Todos los hashes coinciden con los registros originales.'
-                    : 'El contenido actual difiere del registrado al momento del sellado.'}
-                </AlertDescription>
-              </Alert>
-
-              {/* Details */}
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Hash de sesion:</span>
-                  <Badge variant={auditResult.verification.sessionHashValid ? 'secondary' : 'destructive'}>
-                    {auditResult.verification.sessionHashValid ? 'Valido' : 'Invalido'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Cadena de mensajes:</span>
-                  <Badge variant={auditResult.verification.chainValid ? 'secondary' : 'destructive'}>
-                    {auditResult.verification.chainValid ? 'Intacta' : 'Rota'}
-                  </Badge>
-                </div>
-                {auditResult.arkiv.configured && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Verificacion Arkiv:</span>
-                    <Badge variant={auditResult.arkiv.verified ? 'secondary' : 'outline'}>
-                      {auditResult.arkiv.verified ? 'Verificado' : 'No verificado'}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Hashes */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Hashes</p>
-                <div className="bg-muted rounded p-3 font-mono text-xs space-y-1">
-                  <p><span className="text-muted-foreground">Actual:</span> {auditResult.hashes.reconstructed.slice(0, 32)}...</p>
-                  <p><span className="text-muted-foreground">Guardado:</span> {auditResult.hashes.stored?.slice(0, 32)}...</p>
-                </div>
-              </div>
-
-              {auditResult.arkiv.entityKey && !auditResult.arkiv.entityKey.startsWith('local_') && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Arkiv Network</p>
-                  <div className="bg-muted rounded p-3 font-mono text-xs space-y-1">
-                    <p><span className="text-muted-foreground">Entity Key:</span> {auditResult.arkiv.entityKey.slice(0, 40)}...</p>
-                    {auditResult.arkiv.blockNumber && (
-                      <p><span className="text-muted-foreground">Bloque:</span> {auditResult.arkiv.blockNumber}</p>
-                    )}
-                    {auditResult.arkiv.explorerUrl && (
-                      <a 
-                        href={auditResult.arkiv.explorerUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline block mt-2"
-                      >
-                        Ver en Arkiv Explorer
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <AuditResult result={auditResult} />
           )}
 
           <DialogFooter>
