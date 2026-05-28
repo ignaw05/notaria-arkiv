@@ -62,10 +62,10 @@ export async function POST(
       .map((m) => `${m.role === 'user' ? 'Médico' : 'Asistente de IA'}: ${m.content}`)
       .join('\n\n')
 
-    // Call Gemini to generate the summary in a single sentence
+    // Call Gemini to generate the summary in max 5 words
     const { text: summaryText } = await generateText({
       model: google('gemini-3.1-flash-lite'),
-      prompt: `Resume la siguiente conversación clínica entre un Médico y un Asistente de IA en una única oración concisa y muy profesional en español. Debe ser un resumen objetivo del caso clínico analizado. No agregues preámbulos, introducciones ni saludos; responde únicamente con la oración sintetizada.\n\nConversación:\n${conversationText}`,
+      prompt: `Resume la siguiente conversación clínica entre un Médico y un Asistente de IA en una frase muy corta de no más de 5 palabras en español (por ejemplo: "Consulta por dolor lumbar" o "Seguimiento de paciente hipertenso"). Debe ser sumamente conciso. No agregues preámbulos, introducciones ni saludos; responde únicamente con el resumen sintetizado.\n\nConversación:\n${conversationText}`,
     })
 
     const cleanSummary = summaryText.trim()
