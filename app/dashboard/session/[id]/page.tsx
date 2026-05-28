@@ -21,7 +21,7 @@ import {
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
   FileText, Hash, Calendar
 } from 'lucide-react'
-import { AuditResult as AuditResultComponent } from '@/components/audit/audit-result'
+import { AuditResultDialog } from '@/components/audit/audit-result-dialog'
 import type { AuditResult as AuditResultType } from '@/lib/types'
 
 interface Message {
@@ -103,6 +103,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     useSWR<{ sessions: Session[] }>('/api/session', fetcher)
   
   const [messages, setMessages] = useState<Message[]>([])
+  const [messagesLoading, setMessagesLoading] = useState(true)
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isSealing, setIsSealing] = useState(false)
@@ -126,6 +127,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   // Load messages on mount
   useEffect(() => {
     async function loadMessages() {
+      setMessagesLoading(true)
       try {
         const res = await fetch(`/api/session/${id}/audit`)
         const data = await res.json()
@@ -134,6 +136,8 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
         }
       } catch (error) {
         console.error('Error loading messages:', error)
+      } finally {
+        setMessagesLoading(false)
       }
     }
     loadMessages()
@@ -364,7 +368,31 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       {/* Messages */}
       <ScrollArea className="flex-1 p-6">
         <div className="max-w-3xl mx-auto space-y-4">
-          {messages.length === 0 ? (
+          {messagesLoading ? (
+            <div className="space-y-6 py-4 animate-pulse">
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                <div className="space-y-2 flex-1 max-w-[65%]">
+                  <div className="h-4 bg-muted rounded-md w-1/4" />
+                  <div className="bg-muted rounded-lg p-4 h-16 w-full" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <div className="space-y-2 flex-1 max-w-[50%] flex flex-col items-end">
+                  <div className="h-4 bg-muted rounded-md w-1/3" />
+                  <div className="bg-muted rounded-lg p-4 h-12 w-full" />
+                </div>
+                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+              </div>
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                <div className="space-y-2 flex-1 max-w-[75%]">
+                  <div className="h-4 bg-muted rounded-md w-1/5" />
+                  <div className="bg-muted rounded-lg p-4 h-24 w-full" />
+                </div>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Inicia la conversacion con el asistente clinico</p>
@@ -589,35 +617,13 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       </Dialog>
 
       {/* Audit Result Dialog */}
-      <Dialog open={showAuditDialog} onOpenChange={setShowAuditDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {auditResult?.wasManipulated ? (
-                <>
-                  <ShieldAlert className="h-5 w-5 text-destructive" />
-                  Integridad Comprometida
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="h-5 w-5 text-green-600" />
-                  Conversacion Integra
-                </>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {auditResult && (
-            <AuditResultComponent result={auditResult} />
-          )}
-
-          <DialogFooter>
-            <Button onClick={() => setShowAuditDialog(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {auditResult && (
+        <AuditResultDialog
+          open={showAuditDialog}
+          onOpenChange={setShowAuditDialog}
+          result={auditResult}
+        />
+      )}
     </div>
   )
 }
