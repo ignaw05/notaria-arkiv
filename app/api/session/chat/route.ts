@@ -1,6 +1,10 @@
 import { generateObject } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { z } from 'zod'
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+})
 import { createClient } from '@/lib/supabase/server'
 import { generateMessageHash } from '@/lib/crypto'
 
@@ -236,7 +240,8 @@ ${historyText}`
       },
     })
   } catch (error) {
-    console.error('Chat API error:', error)
-    return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
+    console.error('[v0] Chat API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+    return Response.json({ error: 'Error interno del servidor', details: errorMessage }, { status: 500 })
   }
 }
