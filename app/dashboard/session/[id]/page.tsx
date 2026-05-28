@@ -107,7 +107,16 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [isSealing, setIsSealing] = useState(false)
   const [isAuditing, setIsAuditing] = useState(false)
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
+  const [sealResult, setSealResult] = useState<{
+    sessionHash: string
+    arkivEntityKey: string | null
+    arkivTxHash: string | null
+    arkivExplorerUrl: string | null
+    arkivTxUrl: string | null
+    arkivConfigured: boolean
+  } | null>(null)
   const [showSealDialog, setShowSealDialog] = useState(false)
+  const [showSealResultDialog, setShowSealResultDialog] = useState(false)
   const [showAuditDialog, setShowAuditDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -198,16 +207,20 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       }
 
       const data = await res.json()
-      toast.success('Sesion sellada exitosamente')
-      setShowSealDialog(false)
-      mutateSession()
       
-      // Show seal result
-      toast.info(
-        data.arkivConfigured 
-          ? `Hash registrado en Arkiv: ${data.arkivEntityId?.slice(0, 20)}...`
-          : 'Hash guardado localmente (Arkiv no configurado)'
-      )
+      // Store seal result for popup
+      setSealResult({
+        sessionHash: data.sessionHash,
+        arkivEntityKey: data.arkivEntityKey,
+        arkivTxHash: data.arkivTxHash,
+        arkivExplorerUrl: data.arkivExplorerUrl,
+        arkivTxUrl: data.arkivTxUrl,
+        arkivConfigured: data.arkivConfigured,
+      })
+      
+      setShowSealDialog(false)
+      setShowSealResultDialog(true)
+      mutateSession()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al sellar sesion')
     } finally {
@@ -433,6 +446,97 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             </Button>
             <Button onClick={handleSeal} disabled={isSealing}>
               {isSealing ? 'Sellando...' : 'Confirmar Sellado'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Seal Result Dialog */}
+      <Dialog open={showSealResultDialog} onOpenChange={setShowSealResultDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-green-600" />
+              Sesion Sellada Exitosamente
+            </DialogTitle>
+            <DialogDescription>
+              La conversacion ha sido sellada y su hash ha sido registrado de forma inmutable.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {sealResult && (
+            <div className="space-y-4">
+              {/* Session Hash */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Hash de la Sesion
+                </p>
+                <code className="block bg-muted p-3 rounded text-xs break-all font-mono border">
+                  {sealResult.sessionHash}
+                </code>
+              </div>
+
+              {/* Arkiv Info */}
+              {sealResult.arkivConfigured && sealResult.arkivEntityKey && !sealResult.arkivEntityKey.startsWith('local_') ? (
+                <div className="space-y-3">
+                  <Separator />
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Shield className="h-4 w-4" />
+                    <span className="font-medium">Registrado en Arkiv Network</span>
+                  </div>
+                  
+                  {/* Entity Key */}
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Entity Key:</p>
+                    <code className="block bg-muted p-2 rounded text-xs break-all font-mono">
+                      {sealResult.arkivEntityKey}
+                    </code>
+                  </div>
+
+                  {/* Transaction Hash */}
+                  {sealResult.arkivTxHash && (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Transaction Hash:</p>
+                      <code className="block bg-muted p-2 rounded text-xs break-all font-mono">
+                        {sealResult.arkivTxHash}
+                      </code>
+                    </div>
+                  )}
+
+                  {/* Explorer Links */}
+                  <div className="flex gap-2 pt-2">
+                    {sealResult.arkivExplorerUrl && (
+                      <Button variant="outline" size="sm" asChild className="flex-1">
+                        <a href={sealResult.arkivExplorerUrl} target="_blank" rel="noopener noreferrer">
+                          Ver Entity en Explorer
+                        </a>
+                      </Button>
+                    )}
+                    {sealResult.arkivTxUrl && (
+                      <Button variant="outline" size="sm" asChild className="flex-1">
+                        <a href={sealResult.arkivTxUrl} target="_blank" rel="noopener noreferrer">
+                          Ver Transaccion
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Almacenamiento Local</AlertTitle>
+                  <AlertDescription>
+                    El hash se guardo localmente. Configura ARKIV_PRIVATE_KEY para registrar en blockchain.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setShowSealResultDialog(false)}>
+              Entendido
             </Button>
           </DialogFooter>
         </DialogContent>
