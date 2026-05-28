@@ -102,10 +102,6 @@ export async function GET(
     const hashesMatch = reconstructedHash === storedHash
 
     // Step 4: Verify individual message hash chain
-    console.log('[v0] Verifying chain for', messages?.length, 'messages')
-    if (messages?.length) {
-      console.log('[v0] First message created_at:', messages[0].created_at)
-    }
     const chainVerification = await verifyHashChain(
       (messages || []).map((m) => ({
         content: m.content,
@@ -116,11 +112,8 @@ export async function GET(
       }))
     )
 
-    console.log('[v0] Chain verification result:', chainVerification)
-
     // Determine overall validity
-    // El hash de sesion es la fuente de verdad principal - si coincide, la conversacion no fue manipulada
-    // La cadena de hashes es una verificacion secundaria que puede fallar por diferencias de timestamp
+    // El hash de sesion es la fuente de verdad principal
     const isValid = hashesMatch
     const wasManipulated = !hashesMatch
 
@@ -129,16 +122,22 @@ export async function GET(
       valid: isValid,
       wasManipulated,
       sessionId,
-      currentHash: reconstructedHash,
-      storedHash,
-      arkivEntityId: session.arkiv_entity_id,
-      arkivVerified,
-      arkivStoredHash,
-      arkivTimestamp,
-      arkivBlockNumber,
-      messageChainValid: chainVerification.isValid,
-      brokenLinks: chainVerification.brokenAt ? [String(chainVerification.brokenAt)] : [],
-      verifiedAt: new Date().toISOString(),
+      hashes: {
+        reconstructed: reconstructedHash,
+        stored: storedHash || '',
+        match: hashesMatch,
+      },
+      arkiv: {
+        configured: isArkivConfigured(),
+        verified: arkivVerified,
+        entityKey: session.arkiv_entity_id,
+        storedHash: arkivStoredHash,
+        timestamp: arkivTimestamp,
+        blockNumber: arkivBlockNumber,
+        explorerUrl: session.arkiv_entity_id && !session.arkiv_entity_id.startsWith('local_')
+          ? getArkivExplorerUrl(session.arkiv_entity_id)
+          : null,
+      },
     }
 
     // Log verification attempt
@@ -175,13 +174,14 @@ export async function GET(
         reconstructedHash,
         storedHash,
         wasManipulated,
-        verifiedAt: auditResult.verifiedAt,
+        verifiedAt: new Date().toISOString(),
       },
     })
 
     return Response.json({
       valid: isValid,
       wasManipulated,
+      sessionId,
       status: 'sealed',
       auditResult,
       verification: {

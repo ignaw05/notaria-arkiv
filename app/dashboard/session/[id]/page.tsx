@@ -21,7 +21,8 @@ import {
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
   FileText, Hash, Calendar
 } from 'lucide-react'
-import { AuditResult } from '@/components/audit/audit-result'
+import { AuditResult as AuditResultComponent } from '@/components/audit/audit-result'
+import type { AuditResult as AuditResultType } from '@/lib/types'
 
 interface Message {
   id: string
@@ -106,7 +107,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [isSending, setIsSending] = useState(false)
   const [isSealing, setIsSealing] = useState(false)
   const [isAuditing, setIsAuditing] = useState(false)
-  const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
+  const [auditResult, setAuditResult] = useState<AuditResultType | null>(null)
   const [sealResult, setSealResult] = useState<{
     sessionHash: string
     arkivEntityKey: string | null
@@ -607,7 +608,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           </DialogHeader>
           
           {auditResult && (
-            <AuditResult result={auditResult} />
+            <AuditResultComponent result={auditResult} />
           )}
 
           <DialogFooter>

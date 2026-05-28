@@ -133,14 +133,18 @@ export interface AuditResult {
   valid: boolean
   wasManipulated: boolean
   sessionId: string
-  currentHash: string
-  storedHash: string | null
-  arkivEntityId: string | null
-  arkivVerified: boolean
-  arkivStoredHash: string | null
-  arkivTimestamp: number | null
-  arkivBlockNumber: number | null
-  messageChainValid: boolean
-  brokenLinks: string[]
-  verifiedAt: string
+  hashes: {
+    reconstructed: string
+    stored: string
+    match: boolean
+  }
+  arkiv: {
+    configured: boolean
+    verified: boolean
+    entityKey: string | null
+    storedHash: string | null
+    timestamp: number | null
+    blockNumber: number | null
+    explorerUrl: string | null
+  }
 }
