@@ -6,7 +6,7 @@
 ## 👥 Equipo y Proyecto
 * **Nombre del Proyecto:** NotarIA
 * **Demo:** [notaria-arkiv.vercel.app](https://notaria-arkiv.vercel.app)
-* **Pitch + Video Demos:** [link video](https://youtu.be/fHvbg9qbpq8?si=mK5hHQETcYhjD8d9)
+* **Pitch + Video Demo:** [link video](https://youtu.be/fHvbg9qbpq8?si=mK5hHQETcYhjD8d9)
 * **Integrantes del Equipo:**
   * **Ignacio Wuilloud** - [@ignaw05](https://github.com/ignaw05) (GitHub)
 
