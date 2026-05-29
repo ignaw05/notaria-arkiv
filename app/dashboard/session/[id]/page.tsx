@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { 
   ArrowLeft, Send, Shield, ShieldCheck, ShieldX, ShieldAlert, 
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
-  FileText, Hash, Calendar
+  FileText, Hash, Calendar, CheckCircle2
 } from 'lucide-react'
 import { AuditResultDialog } from '@/components/audit/audit-result-dialog'
 import type { AuditResult as AuditResultType } from '@/lib/types'
@@ -329,41 +329,37 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-slate-50/40 dark:bg-transparent">
       {/* Header */}
-      <div className="border-b px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-background border-b px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href={session.patient_id ? `/dashboard/patients/${session.patient_id}` : '/dashboard/patients'}>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-lg font-semibold">{session.title}</h1>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                {session.patients && (
-                  <span className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    {session.patients.full_name}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {format(parseISO(session.started_at), 'dd/MM/yyyy HH:mm')}
-                </span>
+              <h1 className="text-base font-semibold leading-none">{session.title}</h1>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
+                <User className="h-3.5 w-3.5" />
+                <span>{session.patients?.full_name || 'Paciente sin nombre'}</span>
+                <span>•</span>
+                <Calendar className="h-3.5 w-3.5" />
+                <span>{format(parseISO(session.started_at), 'dd/MM/yyyy HH:mm')}</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {session.is_active ? (
               <>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Clock className="h-3 w-3 mr-1" />
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                   Activa
                 </Badge>
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={() => setShowSealDialog(true)}
                   disabled={messages.length === 0}
                 >
@@ -373,11 +369,11 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               </>
             ) : (
               <>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  <ShieldCheck className="h-3 w-3 mr-1" />
+                <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400 flex items-center gap-1">
+                  <ShieldCheck className="h-3.5 w-3.5" />
                   Sellada
                 </Badge>
-                <Button onClick={handleAudit} disabled={isAuditing}>
+                <Button onClick={handleAudit} disabled={isAuditing} size="sm">
                   <Shield className="h-4 w-4 mr-2" />
                   {isAuditing ? 'Auditando...' : 'Auditar'}
                 </Button>
@@ -389,11 +385,11 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-5xl mx-auto space-y-6">
           {messagesLoading ? (
             <div className="space-y-6 py-4 animate-pulse">
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
                 <div className="space-y-2 flex-1 max-w-[65%]">
                   <div className="h-4 bg-muted rounded-md w-1/4" />
                   <div className="bg-muted rounded-lg p-4 h-16 w-full" />
@@ -404,10 +400,10 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                   <div className="h-4 bg-muted rounded-md w-1/3" />
                   <div className="bg-muted rounded-lg p-4 h-12 w-full" />
                 </div>
-                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
               </div>
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
                 <div className="space-y-2 flex-1 max-w-[75%]">
                   <div className="h-4 bg-muted rounded-md w-1/5" />
                   <div className="bg-muted rounded-lg p-4 h-24 w-full" />
@@ -417,9 +413,9 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           ) : messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Inicia la conversacion con el asistente clinico</p>
+              <p>Inicia la conversación con el asistente clínico</p>
               <p className="text-sm mt-2">
-                La IA tiene acceso al historial medico del paciente para dar recomendaciones contextualizadas.
+                La IA tiene acceso al historial médico del paciente para dar recomendaciones contextualizadas.
               </p>
             </div>
           ) : (
@@ -428,45 +424,60 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               <div
                 key={message.id}
                 className={cn(
-                  'flex gap-3',
+                  'flex',
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                      <Bot className="w-5 h-5 text-primary-foreground" />
+                    </div>
                   </div>
                 )}
-                <div
-                  className={cn(
-                    'max-w-[80%] rounded-lg p-4',
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  )}
-                >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                  <div className={cn(
-                    'flex items-center gap-2 mt-2 text-xs',
-                    message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                  )}>
-                    <span>{format(parseISO(message.created_at), 'HH:mm')}</span>
-                    {message.role === 'assistant' && message.risk_level && (
-                      <Badge className={getRiskColor(message.risk_level)} variant="secondary">
-                        {getRiskLabel(message.risk_level)}
-                      </Badge>
+                
+                <div className={cn('max-w-3xl', message.role === 'user' ? 'flex flex-col items-end' : '')}>
+                  <div
+                    className={cn(
+                      'rounded-lg p-4 leading-relaxed',
+                      message.role === 'user'
+                        ? 'bg-blue-900 text-white dark:bg-blue-950 border border-blue-800'
+                        : 'bg-card border text-foreground'
                     )}
-                    {message.role === 'assistant' && message.confidence_score && (
-                      <span>Confianza: {Math.round(message.confidence_score * 100)}%</span>
-                    )}
-                    <span className="font-mono text-[10px] opacity-70" title={message.hash}>
-                      #{message.hash.slice(0, 8)}
-                    </span>
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <div className={cn(
+                      'flex items-center gap-2 mt-2.5 text-xs',
+                      message.role === 'user' ? 'text-blue-200' : 'text-muted-foreground'
+                    )}>
+                      <span>{format(parseISO(message.created_at), 'HH:mm')}</span>
+                      {message.role === 'assistant' && message.risk_level && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="outline" className={cn('text-[10px] h-4 py-0 px-1 border-destructive/20 hover:bg-transparent', getRiskColor(message.risk_level))}>
+                            {getRiskLabel(message.risk_level)}
+                          </Badge>
+                        </>
+                      )}
+                      {message.role === 'assistant' && message.confidence_score && (
+                        <>
+                          <span>•</span>
+                          <span>Confianza: {Math.round(message.confidence_score * 100)}%</span>
+                        </>
+                      )}
+                      <span>•</span>
+                      <span className="font-mono opacity-80" title={message.hash}>
+                        #{message.hash.slice(0, 8)}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
                 {message.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    <User className="h-4 w-4" />
+                  <div className="flex-shrink-0 ml-3">
+                    <div className="w-10 h-10 bg-muted border rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-muted-foreground" />
+                    </div>
                   </div>
                 )}
               </div>
@@ -474,12 +485,14 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             
             {/* Typing indicator */}
             {isSending && (
-              <div className="flex items-start gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-primary-foreground" />
+              <div className="flex items-start justify-start">
+                <div className="flex-shrink-0 mr-3">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-primary-foreground" />
+                  </div>
                 </div>
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="flex items-center gap-1">
+                <div className="bg-card border rounded-lg p-4">
+                  <div className="flex items-center gap-1.5 h-5 px-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -495,17 +508,31 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       {/* Input */}
       {session.is_active && (
-        <div className="border-t p-4">
-          <div className="max-w-3xl mx-auto flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribe tu consulta clinica..."
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              disabled={isSending}
-            />
-            <Button onClick={handleSend} disabled={isSending || !input.trim()}>
-              <Send className="h-4 w-4" />
+        <div className="bg-background border-t p-4">
+          <div className="max-w-5xl mx-auto flex items-end gap-3">
+            <div className="flex-1 relative">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                placeholder="Escribe tu consulta clínica..."
+                rows={1}
+                disabled={isSending}
+                className="w-full min-h-[48px] max-h-[200px] px-4 py-3 border border-input rounded-lg resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-background text-sm text-foreground leading-relaxed transition-colors shadow-sm"
+                style={{ height: 'auto' }}
+              />
+            </div>
+            <Button 
+              onClick={handleSend} 
+              disabled={isSending || !input.trim()}
+              className="bg-blue-600 hover:bg-blue-700 h-12 px-4 shrink-0 text-white transition-colors"
+            >
+              <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
