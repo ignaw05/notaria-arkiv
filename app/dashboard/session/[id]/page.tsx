@@ -330,8 +330,8 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   if (sessionLoading) {
     return (
       <div className="flex flex-col h-full p-6 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-8 w-64 animate-none" />
+        <Skeleton className="h-[600px] w-full animate-none" />
       </div>
     )
   }

@@ -149,7 +149,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  const [isStartingSession, setIsStartingSession] = useState(false)
+
   const handleStartSession = async () => {
+    if (isStartingSession) return
+    setIsStartingSession(true)
     try {
       const res = await fetch('/api/session', {
         method: 'POST',
@@ -163,6 +167,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       window.location.href = `/dashboard/session/${data.session.id}`
     } catch {
       toast.error('Error al iniciar consulta')
+      setIsStartingSession(false)
     }
   }
 
@@ -180,13 +185,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         {/* Header Skeleton */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 rounded-full" />
+            <Skeleton className="h-9 w-9 rounded-full animate-none" />
             <div className="space-y-2">
-              <Skeleton className="h-7 w-48" />
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-7 w-48 animate-none" />
+              <Skeleton className="h-4 w-32 animate-none" />
             </div>
           </div>
-          <Skeleton className="h-10 w-36 rounded-xl" />
+          <Skeleton className="h-10 w-36 rounded-xl animate-none" />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-12 items-start">
@@ -194,20 +199,20 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <div className="border border-slate-100 shadow-sm rounded-2xl p-6 lg:col-span-5 space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <Skeleton className="h-6 w-36" />
-                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-6 w-36 animate-none" />
+                <Skeleton className="h-3 w-20 animate-none" />
               </div>
-              <Skeleton className="h-8 w-24 rounded-xl" />
+              <Skeleton className="h-8 w-24 rounded-xl animate-none" />
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="border border-slate-100 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-5 w-20 rounded" />
+                    <Skeleton className="h-4 w-16 animate-none" />
+                    <Skeleton className="h-5 w-20 rounded animate-none" />
                   </div>
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-full animate-none" />
+                  <Skeleton className="h-4 w-2/3 animate-none" />
                 </div>
               ))}
             </div>
@@ -216,18 +221,18 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           {/* Right Column - Sessions Skeleton */}
           <div className="border border-slate-100 shadow-sm rounded-2xl p-6 lg:col-span-7 space-y-6">
             <div className="space-y-2">
-              <Skeleton className="h-6 w-28" />
-              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-28 animate-none" />
+              <Skeleton className="h-3 w-16 animate-none" />
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="border border-slate-100 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-1/2" />
-                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-5 w-1/2 animate-none" />
+                    <Skeleton className="h-5 w-16 rounded-full animate-none" />
                   </div>
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-4 w-3/4 animate-none" />
+                  <Skeleton className="h-3 w-12 animate-none" />
                 </div>
               ))}
             </div>
@@ -257,10 +262,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <Button 
           onClick={handleStartSession} 
+          disabled={isStartingSession}
           className="bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90 font-semibold px-4 py-2 h-10 rounded-xl flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Nueva Consulta
+          {isStartingSession ? 'Iniciando...' : 'Nueva Consulta'}
         </Button>
       </div>
 
