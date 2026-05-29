@@ -44,6 +44,7 @@ import {
   Users,
   Wallet,
   Loader2,
+  ScrollText,
 } from 'lucide-react'
 
 interface DashboardSidebarProps {
@@ -54,6 +55,8 @@ interface DashboardSidebarProps {
 const doctorNavItems = [
   { title: 'Pacientes', href: '/dashboard/patients', icon: Users },
   { title: 'Historial', href: '/dashboard/history', icon: History },
+  { title: 'Mis Registros', href: '/dashboard/records', icon: Shield },
+  { title: 'Mi Actividad', href: '/dashboard/activity', icon: ScrollText },
 ]
 
 const auditorNavItems = [

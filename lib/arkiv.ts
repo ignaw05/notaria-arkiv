@@ -217,11 +217,44 @@ export async function verifySessionOnArkiv(
   }
 }
 
+export interface ArkivEntity<T> {
+  key: string
+  owner: string
+  creator: string
+  payload: T
+  attributes: Record<string, string>
+}
+
+function parseRpcEntity<T>(entity: any): ArkivEntity<T> {
+  const hex = entity.value.startsWith('0x') ? entity.value.slice(2) : entity.value
+  const jsonStr = Buffer.from(hex, 'hex').toString('utf-8')
+  let payload: T
+  try {
+    payload = JSON.parse(jsonStr)
+  } catch (e) {
+    payload = {} as T
+  }
+  
+  const attributes: Record<string, string> = {}
+  if (entity.stringAttributes) {
+    for (const attr of entity.stringAttributes) {
+      attributes[attr.key] = attr.value
+    }
+  }
+  
+  return {
+    key: entity.key,
+    owner: entity.owner,
+    creator: entity.creator,
+    payload,
+    attributes,
+  }
+}
+
 /**
  * Query all sessions for a specific app (NotarIA)
  */
 export async function queryArkivSessions(): Promise<string[]> {
-  // Using JSON-RPC query to find all NotarIA sessions
   const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
   
   try {
@@ -234,15 +267,106 @@ export async function queryArkivSessions(): Promise<string[]> {
         method: 'arkiv_query',
         params: [
           'app = "notaria" && type = "clinical_session"',
-          { resultsPerPage: '0x64' }, // 100 results
+          { resultsPerPage: '0x64' },
         ],
       }),
     })
     
     const data = await response.json()
-    return data.result?.entities?.map((e: { key: string }) => e.key) || []
+    const items = data.result?.data || data.result?.entities || []
+    return items.map((e: { key: string }) => e.key)
   } catch (error) {
     console.error('[Arkiv] Query error:', error)
+    return []
+  }
+}
+
+/**
+ * Query sessions on Arkiv Network for a specific doctor
+ */
+export async function queryArkivSessionsByDoctor(doctorId: string): Promise<ArkivEntity<ArkivSessionPayload>[]> {
+  const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
+  
+  try {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'arkiv_query',
+        params: [
+          `app = "notaria" && type = "clinical_session" && doctorId = "${doctorId}"`,
+          { resultsPerPage: '0x64' },
+        ],
+      }),
+    })
+    
+    const data = await response.json()
+    const items = data.result?.data || data.result?.entities || []
+    return items.map((item: any) => parseRpcEntity<ArkivSessionPayload>(item))
+  } catch (error) {
+    console.error('[Arkiv] Query sessions by doctor error:', error)
+    return []
+  }
+}
+
+/**
+ * Query sessions on Arkiv Network for a specific patient
+ */
+export async function queryArkivSessionsByPatient(patientId: string): Promise<ArkivEntity<ArkivSessionPayload>[]> {
+  const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
+  
+  try {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'arkiv_query',
+        params: [
+          `app = "notaria" && type = "clinical_session" && patientId = "${patientId}"`,
+          { resultsPerPage: '0x64' },
+        ],
+      }),
+    })
+    
+    const data = await response.json()
+    const items = data.result?.data || data.result?.entities || []
+    return items.map((item: any) => parseRpcEntity<ArkivSessionPayload>(item))
+  } catch (error) {
+    console.error('[Arkiv] Query sessions by patient error:', error)
+    return []
+  }
+}
+
+/**
+ * Query patients on Arkiv Network
+ */
+export async function queryArkivPatients(): Promise<ArkivEntity<ArkivPatientPayload>[]> {
+  const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
+  
+  try {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'arkiv_query',
+        params: [
+          'app = "notaria" && type = "patient"',
+          { resultsPerPage: '0x64' },
+        ],
+      }),
+    })
+    
+    const data = await response.json()
+    const items = data.result?.data || data.result?.entities || []
+    return items.map((item: any) => parseRpcEntity<ArkivPatientPayload>(item))
+  } catch (error) {
+    console.error('[Arkiv] Query patients error:', error)
     return []
   }
 }
@@ -285,13 +409,13 @@ export async function findArkivEntityKeyBySessionId(sessionId: string): Promise<
         method: 'arkiv_query',
         params: [
           `app = "notaria" && type = "clinical_session" && sessionId = "${sessionId}"`,
-          { resultsPerPage: '0x01' },
+          { resultsPerPage: '0x1' },
         ],
       }),
     })
     
     const data = await response.json()
-    const entities = data.result?.entities
+    const entities = data.result?.data || data.result?.entities
     if (entities && entities.length > 0) {
       return entities[0].key
     }
