@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateHash, verifyHashChain } from '@/lib/crypto'
-import { verifySessionOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
+import { verifySessionOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl, findArkivEntityKeyBySessionId } from '@/lib/arkiv'
 import { NextRequest } from 'next/server'
 import type { AuditResult } from '@/lib/types'
 
@@ -84,10 +84,28 @@ export async function GET(
     let arkivStoredHash: string | null = null
     let arkivTimestamp: number | null = null
     let arkivBlockNumber: number | null = null
+    let resolvedEntityId = session.arkiv_entity_id
+    let usedArkivQuery = false
     
-    if (session.arkiv_entity_id && isArkivConfigured() && !session.arkiv_entity_id.startsWith('local_')) {
+    if (isArkivConfigured()) {
       try {
-        const arkivResult = await verifySessionOnArkiv(session.arkiv_entity_id, reconstructedHash)
+        // Query Arkiv Network using arkiv_query
+        const queriedKey = await findArkivEntityKeyBySessionId(sessionId)
+        if (queriedKey) {
+          resolvedEntityId = queriedKey
+          usedArkivQuery = true
+          console.log('[Arkiv] Entity key successfully queried and resolved via arkiv_query:', queriedKey)
+        } else {
+          console.log('[Arkiv] Entity key not found via arkiv_query, falling back to database value')
+        }
+      } catch (queryError) {
+        console.error('[Arkiv] Error performing arkiv_query:', queryError)
+      }
+    }
+
+    if (resolvedEntityId && isArkivConfigured() && !resolvedEntityId.startsWith('local_')) {
+      try {
+        const arkivResult = await verifySessionOnArkiv(resolvedEntityId, reconstructedHash)
         arkivVerified = arkivResult.valid
         arkivStoredHash = arkivResult.storedHash
         arkivTimestamp = arkivResult.timestamp
@@ -130,13 +148,14 @@ export async function GET(
       arkiv: {
         configured: isArkivConfigured(),
         verified: arkivVerified,
-        entityKey: session.arkiv_entity_id,
+        entityKey: resolvedEntityId,
         storedHash: arkivStoredHash,
         timestamp: arkivTimestamp,
         blockNumber: arkivBlockNumber,
-        explorerUrl: session.arkiv_entity_id && !session.arkiv_entity_id.startsWith('local_')
-          ? getArkivExplorerUrl(session.arkiv_entity_id)
+        explorerUrl: resolvedEntityId && !resolvedEntityId.startsWith('local_')
+          ? getArkivExplorerUrl(resolvedEntityId)
           : null,
+        usedArkivQuery,
       },
     }
 
@@ -153,7 +172,8 @@ export async function GET(
         arkivVerified,
         reconstructedHash,
         storedHash,
-        arkivEntityId: session.arkiv_entity_id,
+        arkivEntityId: resolvedEntityId,
+        usedArkivQuery,
       },
     })
 
@@ -198,13 +218,14 @@ export async function GET(
       arkiv: {
         configured: isArkivConfigured(),
         verified: arkivVerified,
-        entityKey: session.arkiv_entity_id,
+        entityKey: resolvedEntityId,
         storedHash: arkivStoredHash,
         timestamp: arkivTimestamp,
         blockNumber: arkivBlockNumber,
-        explorerUrl: session.arkiv_entity_id && !session.arkiv_entity_id.startsWith('local_')
-          ? getArkivExplorerUrl(session.arkiv_entity_id)
+        explorerUrl: resolvedEntityId && !resolvedEntityId.startsWith('local_')
+          ? getArkivExplorerUrl(resolvedEntityId)
           : null,
+        usedArkivQuery,
       },
       session: {
         id: sessionId,

@@ -147,5 +147,6 @@ export interface AuditResult {
     timestamp: number | null
     blockNumber: number | null
     explorerUrl: string | null
+    usedArkivQuery?: boolean
   }
 }

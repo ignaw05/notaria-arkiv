@@ -34,6 +34,7 @@ interface AuditResultDialogProps {
       timestamp: number | null
       blockNumber: number | null
       explorerUrl: string | null
+      usedArkivQuery?: boolean
     }
   }
 }
@@ -123,10 +124,17 @@ export function AuditResultDialog({
             {/* Verification details */}
             {result.arkiv.configured && result.arkiv.entityKey && !result.arkiv.entityKey.startsWith('local_') ? (
               <div className="space-y-3 pt-4 border-t border-border/60">
-                <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground/90">
-                  <Shield className="h-4 w-4 text-primary/80" />
-                  Verificación en Blockchain Arkiv
-                </h4>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground/90">
+                    <Shield className="h-4 w-4 text-primary/80" />
+                    Verificación en Blockchain Arkiv
+                  </h4>
+                  {result.arkiv.usedArkivQuery && (
+                    <Badge variant="secondary" className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      Resuelto por Query (Búsqueda)
+                    </Badge>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/30 border border-border/40 rounded-lg p-4">
                   <div className="space-y-1">

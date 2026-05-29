@@ -188,3 +188,36 @@ export function getArkivExplorerUrl(entityKey: string): string {
 export function getArkivTxUrl(txHash: string): string {
   return `https://explorer.braga.hoodi.arkiv.network/tx/${txHash}`
 }
+
+/**
+ * Query Arkiv Network to find the entity key for a specific session ID
+ */
+export async function findArkivEntityKeyBySessionId(sessionId: string): Promise<string | null> {
+  const rpcUrl = 'https://braga.hoodi.arkiv.network/rpc'
+  
+  try {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'arkiv_query',
+        params: [
+          `app = "notaria" && type = "clinical_session" && sessionId = "${sessionId}"`,
+          { resultsPerPage: '0x01' },
+        ],
+      }),
+    })
+    
+    const data = await response.json()
+    const entities = data.result?.entities
+    if (entities && entities.length > 0) {
+      return entities[0].key
+    }
+    return null
+  } catch (error) {
+    console.error('[Arkiv] Query by sessionId error:', error)
+    return null
+  }
+}
