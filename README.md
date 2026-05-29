@@ -140,6 +140,20 @@ Al sellar una consulta, se registra una entidad de tipo `clinical_session` y otr
   * Relación `patientEntityKey`: La referencia on-chain al paciente padre.
   * `doctorId` y `patientId`: Atributos adicionales para consultas indexadas directas.
 
+* **Ejemplo de Payload de una entidad `clinical_session` registrada on-chain:**
+  ```json
+  {
+    "type": "clinical_session",
+    "sessionId": "4f0e8e77-8f31-4bf2-b9a1-91544deb63d0",
+    "hash": "93b76e50eab17b6e9de7ba04fd0355733bb25bb0e23103697a271085fa864007",
+    "doctorId": "057322c9-72b8-434b-86fc-d9508b94af82",
+    "patientId": "245cf965-60cc-420b-bf1e-854cc02ba60e",
+    "patientEntityKey": "0xf12f0b028a3fccf22d28e9dfb6adf0c5b9df4b6bad259d4cba1c6f5e7165ff8a",
+    "messageCount": 8,
+    "sealedAt": "2026-05-29T13:17:28.816Z"
+  }
+  ```
+
 ### 2. ¿Qué datos NO se almacenan?
 * **Ningún dato clínico en texto plano:** No se suben diagnósticos, síntomas, recetas ni el contenido de las conversaciones.
 * **Ningún dato de identificación personal:** No se suben nombres de pacientes, documentos (DNI), direcciones, ni datos sensibles de los profesionales de salud.
