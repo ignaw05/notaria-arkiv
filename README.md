@@ -153,15 +153,12 @@ NotarIA utiliza tres capacidades del SDK de Arkiv para descentralizar la confian
 
 ### 1. Registro de Entidades (`createEntity`)
 Cuando la consulta finaliza, el médico presiona **Sellar**. El backend de la app compila el texto completo de la conversación en un formato canónico (`"user: mensaje | assistant: mensaje"`), calcula su hash criptográfico SHA-256 y utiliza `walletClient.createEntity` para registrarlo.
-* **Ubicación en el código:** [registerSessionOnArkiv en lib/arkiv.ts](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/lib/arkiv.ts#L56-L93)
 * **Funcionamiento:** Se crea un payload inmutable que asocia el hash de la sesión con atributos indexables como el `sessionId` del paciente, el `doctorId`, y la marca de tiempo del sellado. Esta operación es firmada por la wallet del médico utilizando la `ARKIV_PRIVATE_KEY` en la testnet Braga.
 
 ### 2. Consulta por Atributos (`arkiv_query`)
 Durante el proceso de auditoría y verificación en caliente, la aplicación no confía únicamente en el ID de entidad almacenado en su base de datos Supabase (el cual también podría haber sido alterado). En su lugar, realiza una consulta descentralizada directamente al nodo RPC de Arkiv.
-* **Ubicación en el código:** [findArkivEntityKeyBySessionId en lib/arkiv.ts](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/lib/arkiv.ts#L193-L224) y [GET en app/api/session/[id]/audit/route.ts](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/app/api/session/%5Bid%5D/audit/route.ts#L88-L105)
 * **Funcionamiento:** Envía una solicitud JSON-RPC `arkiv_query` con los filtros `app = "notaria" && type = "clinical_session" && sessionId = "${sessionId}"`. De esta forma, el sistema recupera la `entityKey` correcta directamente de la red Braga de forma autónoma.
 
 ### 3. Recuperación de Entidades (`getEntity`)
 Una vez obtenida la clave de la entidad inmutable (ya sea por query en caliente o fallback de la base de datos), el sistema descarga el payload inmutable desde Arkiv Network para comprobar su validez.
-* **Ubicación en el código:** [verifySessionOnArkiv en lib/arkiv.ts](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/lib/arkiv.ts#L99-L138)
 * **Funcionamiento:** Llama a `arkivPublicClient.getEntity(entityKey)` para obtener el payload almacenado de forma inmutable en la red. Compara el campo `hash` de los datos de la red con el hash obtenido al reconstruir localmente la conversación con los mensajes actuales de Supabase. Si coinciden, la auditoría muestra un estado verde de **Conversación Íntegra**; si difieren, arroja un estado rojo de **Datos Manipulados**.
