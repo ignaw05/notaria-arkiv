@@ -17,6 +17,7 @@ import { Plus, User, Calendar, FileText, MessageSquare, History, ChevronRight, C
 import Link from 'next/link'
 import { format, differenceInYears, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 
 interface Patient {
   id: string
@@ -245,15 +246,29 @@ export default function PatientsPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <div className="h-5 bg-muted rounded w-2/3" />
+                  <div className="flex gap-2 items-center">
+                    <div className="h-4 bg-muted rounded w-1/4" />
+                    <div className="h-4 bg-muted rounded w-1/3" />
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="h-4 bg-muted rounded w-1/4" />
+                  <div className="h-4 bg-muted rounded w-1/4" />
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="h-4 bg-muted rounded w-1/3" />
+                  <div className="h-24 bg-muted/40 rounded-lg p-3 space-y-2">
+                    <div className="h-5 bg-muted rounded w-1/4" />
+                    <div className="h-4 bg-muted rounded w-5/6" />
+                  </div>
+                </div>
+                <div className="h-10 bg-[#1e3a8a]/20 dark:bg-[#1e3a8a]/10 rounded w-full mt-2" />
               </CardContent>
             </Card>
           ))}
@@ -264,7 +279,7 @@ export default function PatientsPage() {
             <User className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">No hay pacientes</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Comienza agregando tu primer paciente para gestionar su historial medico.
+              Comienza agregando tu primer paciente para gestionar su historial médico.
             </p>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -275,74 +290,70 @@ export default function PatientsPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {data.patients.map((patient) => (
-            <Card key={patient.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{patient.full_name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-3 w-3" />
-                      {calculateAge(patient.date_of_birth)} años
-                      {patient.identifier && (
-                        <>
-                          <span className="text-muted-foreground">•</span>
-                          DNI: {patient.identifier}
-                        </>
-                      )}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <History className="h-4 w-4" />
-                    {patient.medical_history?.length || 0} registros
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="h-4 w-4" />
-                    {patient.sessions?.length || 0} consultas
+            <Card key={patient.id} className="hover:shadow-md transition-all duration-350 border border-border/80">
+              <CardContent className="p-6 space-y-4">
+                {/* Header Info */}
+                <div className="space-y-1.5">
+                  <h2 className="text-lg font-bold text-foreground leading-none">{patient.full_name}</h2>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 text-muted-foreground/80" />
+                    <span>{calculateAge(patient.date_of_birth)} años</span>
+                    {patient.identifier && (
+                      <>
+                        <span>•</span>
+                        <span>DNI: {patient.identifier}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {patient.medical_history?.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium">Ultimo registro:</p>
-                    <div className="text-sm p-3 bg-muted rounded-lg">
-                      <Badge className={getCategoryColor(patient.medical_history[0].category)} variant="secondary">
+                {/* Counts */}
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-muted-foreground/80" />
+                    <span>
+                      {patient.medical_history?.length || 0}{' '}
+                      {(patient.medical_history?.length || 0) === 1 ? 'registro' : 'registros'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground/80" />
+                    <span>
+                      {patient.sessions?.length || 0}{' '}
+                      {(patient.sessions?.length || 0) === 1 ? 'consulta' : 'consultas'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Last Medical Record */}
+                <div className="space-y-2">
+                  <span className="text-xs text-muted-foreground font-semibold block uppercase tracking-wider">Último registro:</span>
+                  {patient.medical_history && patient.medical_history.length > 0 ? (
+                    <div className="text-sm p-4 bg-muted/40 border border-border/30 rounded-lg space-y-2.5">
+                      <Badge className={cn('text-[10px] h-5 py-0 px-2 font-bold select-none', getCategoryColor(patient.medical_history[0].category))} variant="secondary">
                         {getCategoryLabel(patient.medical_history[0].category)}
                       </Badge>
-                      <p className="mt-2 line-clamp-2">{patient.medical_history[0].description}</p>
+                      <p className="text-foreground/80 line-clamp-2 leading-relaxed text-xs">
+                        {patient.medical_history[0].description}
+                      </p>
                     </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleStartSession(patient.id)}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Nueva Consulta
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedPatient(patient)
-                      setIsAddHistoryOpen(true)
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  <Link href={`/dashboard/patients/${patient.id}`}>
-                    <Button variant="outline" size="sm">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  ) : (
+                    <div className="text-sm p-4 bg-muted/20 border border-dashed rounded-lg text-center text-muted-foreground text-xs">
+                      Sin registros médicos.
+                    </div>
+                  )}
                 </div>
+
+                {/* Historial Médico Action */}
+                <Button
+                  asChild
+                  className="w-full bg-[#1e3a8a] hover:bg-[#172554] text-white h-11 font-medium transition-colors mt-2"
+                >
+                  <Link href={`/dashboard/patients/${patient.id}`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Historial Médico
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
