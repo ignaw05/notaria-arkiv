@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Calendar, FileText, MessageSquare, Shield, ShieldCheck, ShieldX, Clock, User, Pencil } from 'lucide-react'
+import { ArrowLeft, Plus, Calendar, FileText, MessageSquare, Shield, ShieldCheck, ShieldX, Clock, User, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { format, differenceInYears, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -46,6 +46,7 @@ interface SessionSummary {
   started_at: string
   closed_at: string | null
   created_at: string
+  summary: string | null
 }
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
@@ -56,23 +57,23 @@ function calculateAge(dateOfBirth: string): number {
 
 function getCategoryColor(category: string | null): string {
   const colors: Record<string, string> = {
-    diagnosis: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    treatment: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    surgery: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    allergy: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    medication: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    other: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    diagnosis: 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-none font-medium',
+    treatment: 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-50 shadow-none font-medium',
+    surgery: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-50 shadow-none font-medium',
+    allergy: 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-50 shadow-none font-medium',
+    medication: 'bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-50 shadow-none font-medium',
+    other: 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-50 shadow-none font-medium',
   }
   return colors[category || 'other'] || colors.other
 }
 
 function getCategoryLabel(category: string | null): string {
   const labels: Record<string, string> = {
-    diagnosis: 'Diagnostico',
+    diagnosis: 'Diagnóstico',
     treatment: 'Tratamiento',
-    surgery: 'Cirugia',
+    surgery: 'Cirugía',
     allergy: 'Alergia',
-    medication: 'Medicacion',
+    medication: 'Medicación',
     other: 'Otro',
   }
   return labels[category || 'other'] || 'Otro'
@@ -185,71 +186,70 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const patient = data.patient
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/patients">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold">{patient.full_name}</h1>
-          <div className="flex items-center gap-4 text-muted-foreground text-sm">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {calculateAge(patient.date_of_birth)} años ({format(parseISO(patient.date_of_birth), 'dd/MM/yyyy')})
-            </span>
-            {patient.identifier && (
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                DNI: {patient.identifier}
-              </span>
-            )}
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/patients">
+            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-slate-100 rounded-full">
+              <ChevronLeft className="h-5 w-5 text-slate-600" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">{patient.full_name}</h1>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              {calculateAge(patient.date_of_birth)} años{patient.identifier ? ` • DNI: ${patient.identifier}` : ''}
+            </p>
           </div>
         </div>
-        <Button onClick={handleStartSession}>
-          <MessageSquare className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={handleStartSession} 
+          className="bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90 font-semibold px-4 py-2 h-10 rounded-xl flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
           Nueva Consulta
         </Button>
       </div>
 
       {patient.notes && (
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-sm text-muted-foreground">{patient.notes}</p>
-          </CardContent>
-        </Card>
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-sm text-slate-600 font-medium">
+          {patient.notes}
+        </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2 items-start">
+      <div className="grid gap-6 lg:grid-cols-12 items-start">
         {/* Medical History */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Historial Medico
-              </CardTitle>
-              <CardDescription>{patient.medical_history?.length || 0} registros</CardDescription>
+        <Card className="border border-slate-100 shadow-sm rounded-2xl lg:col-span-5">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-slate-800">
+                <FileText className="h-5 w-5 text-slate-500" />
+                <CardTitle className="text-lg font-bold text-slate-800">Historial Médico</CardTitle>
+              </div>
+              <CardDescription className="text-xs text-slate-500">{patient.medical_history?.length || 0} registros</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setIsAddHistoryOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsAddHistoryOpen(true)}
+              className="border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-medium px-3 flex items-center gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
               Agregar
             </Button>
           </CardHeader>
           <CardContent>
             {!patient.medical_history?.length ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No hay registros medicos</p>
+              <div className="text-center py-12 text-slate-400">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No hay registros médicos</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {patient.medical_history.map((entry) => (
-                  <div key={entry.id} className="border-l-2 border-muted pl-4 pb-4 group relative">
-                    <div className="flex items-center justify-between gap-2 mb-1">
+                  <div key={entry.id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 group relative hover:border-slate-200 transition-colors">
+                    <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs font-semibold text-slate-400">
                           {format(parseISO(entry.entry_date), 'dd MMM yyyy', { locale: es })}
                         </span>
                         <Badge className={getCategoryColor(entry.category)} variant="secondary">
@@ -259,7 +259,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-200 rounded-lg absolute top-3 right-3"
                         onClick={() => {
                           setEditingHistory({
                             id: entry.id,
@@ -270,10 +270,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           setIsEditHistoryOpen(true)
                         }}
                       >
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        <Pencil className="h-3 w-3 text-slate-500 hover:text-slate-700" />
                       </Button>
                     </div>
-                    <p className="text-sm pr-8">{entry.description}</p>
+                    <div className="text-sm text-slate-700 font-medium space-y-1 pr-6 leading-relaxed">
+                      {entry.description.split('\n').map((line, idx) => (
+                        <p key={idx}>{line}</p>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -282,55 +286,68 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </Card>
 
         {/* Sessions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Consultas
-            </CardTitle>
-            <CardDescription>{patient.sessions?.length || 0} sesiones</CardDescription>
+        <Card className="border border-slate-100 shadow-sm rounded-2xl lg:col-span-7">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2 text-slate-800">
+              <Calendar className="h-5 w-5 text-slate-500" />
+              <CardTitle className="text-lg font-bold text-slate-800">Consultas</CardTitle>
+            </div>
+            <CardDescription className="text-xs text-slate-500">{patient.sessions?.length || 0} sesiones</CardDescription>
           </CardHeader>
           <CardContent>
             {!patient.sessions?.length ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No hay consultas registradas</p>
+              <div className="text-center py-12 text-slate-400">
+                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No hay consultas registradas</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[...patient.sessions]
                   .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                  .map((session) => (
-                    <Link key={session.id} href={`/dashboard/session/${session.id}`}>
-                      <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-sm">{session.title}</span>
-                          {session.is_active ? (
-                            <Badge variant="secondary" className="bg-green-100 text-green-800">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Activa
-                            </Badge>
-                          ) : session.session_hash ? (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                              <ShieldCheck className="h-3 w-3 mr-1" />
-                              Sellada
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">Cerrada</Badge>
-                          )}
+                  .map((session) => {
+                    const formattedDate = format(parseISO(session.created_at), 'd/M/yyyy');
+                    const timeStr = format(parseISO(session.created_at), 'HH:mm');
+                    return (
+                      <Link key={session.id} href={`/dashboard/session/${session.id}`} className="block">
+                        <div className="border border-slate-100 hover:border-slate-200 rounded-xl p-4 hover:bg-slate-50/50 transition-colors flex items-center justify-between group">
+                          <div className="space-y-2 flex-1 pr-4">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-slate-800 text-sm">
+                                Consulta - {patient.full_name} - {formattedDate}
+                              </span>
+                              {session.is_active ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-0.5" />
+                                  Activa
+                                </span>
+                              ) : session.session_hash ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                  <ShieldCheck className="h-3.5 w-3.5 mr-0.5" />
+                                  Sellada
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                                  Cerrada
+                                </span>
+                              )}
+                            </div>
+                            {session.summary ? (
+                              <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                                {session.summary}
+                              </p>
+                            ) : (
+                              <p className="text-sm text-slate-400 italic font-medium">Sin resumen disponible</p>
+                            )}
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mt-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>{timeStr}</span>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors mr-1" />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{format(parseISO(session.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                          {session.arkiv_entity_id && (
-                            <Badge variant="outline" className="text-xs">
-                              <Shield className="h-3 w-3 mr-1" />
-                              Arkiv
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    )
+                  })}
               </div>
             )}
           </CardContent>

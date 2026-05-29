@@ -33,7 +33,8 @@ export async function GET(
         arkiv_entity_id,
         started_at,
         closed_at,
-        created_at
+        created_at,
+        summary
       )
     `)
     .eq('id', id)
