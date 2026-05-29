@@ -48,7 +48,6 @@ interface DashboardSidebarProps {
 
 const doctorNavItems = [
   { title: 'Pacientes', href: '/dashboard/patients', icon: Users },
-  { title: 'Nueva Sesion', href: '/dashboard', icon: MessageSquarePlus },
   { title: 'Historial', href: '/dashboard/history', icon: History },
 ]
 
