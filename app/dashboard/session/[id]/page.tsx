@@ -21,6 +21,7 @@ import {
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
   FileText, Hash, Calendar, CheckCircle2, ExternalLink
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { AuditResultDialog } from '@/components/audit/audit-result-dialog'
 import type { AuditResult as AuditResultType } from '@/lib/types'
 
@@ -121,6 +122,29 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [showSealResultDialog, setShowSealResultDialog] = useState(false)
   const [showAuditDialog, setShowAuditDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [doctorName, setDoctorName] = useState('')
+
+  useEffect(() => {
+    async function loadDoctor() {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+          if (profile?.full_name) {
+            setDoctorName(profile.full_name)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching doctor profile:', err)
+      }
+    }
+    loadDoctor()
+  }, [])
 
   const session = sessionData?.sessions?.find(s => s.id === id)
 
@@ -540,34 +564,46 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       {/* Seal Confirmation Dialog */}
       <Dialog open={showSealDialog} onOpenChange={setShowSealDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
+        <DialogContent className="max-w-md p-6 gap-6 rounded-xl border border-border shadow-2xl">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="flex items-center gap-2.5 text-lg font-bold text-foreground">
+              <Lock className="h-5 w-5 text-foreground/80" />
               Sellar Conversacion
             </DialogTitle>
-            <DialogDescription>
-              Al sellar la conversacion, se generara un hash criptografico de todos los mensajes
-              que se registrara en Arkiv Network para garantizar su integridad.
-            </DialogDescription>
           </DialogHeader>
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Accion irreversible</AlertTitle>
-            <AlertDescription>
-              Una vez sellada, no podras agregar mas mensajes a esta conversacion.
-              El hash quedara registrado de forma inmutable.
-            </AlertDescription>
-          </Alert>
-          <div className="text-sm text-muted-foreground">
-            <p><strong>Mensajes:</strong> {messages.length}</p>
-            <p><strong>Paciente:</strong> {session.patients?.full_name || 'N/A'}</p>
+
+          <div className="space-y-5">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Al sellar la conversacion, se generara un hash criptografico de todos los mensajes que se registraran en Arkiv Network para garantizar su integridad.
+            </p>
+
+            <div className="flex gap-3 bg-amber-500/[0.04] border border-amber-500/20 rounded-lg p-4 text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h5 className="text-sm font-semibold tracking-tight leading-none">Accion irreversible</h5>
+                <p className="text-xs opacity-90 leading-relaxed">
+                  Una vez sellada, no podras agregar mas mensajes a esta conversacion. El hash quedara registrado de forma inmutable.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-foreground/80 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-medium w-16">Paciente:</span>
+                <span className="font-semibold text-foreground">{session.patients?.full_name || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-medium w-16">Médico:</span>
+                <span className="font-semibold text-foreground">{doctorName || 'Dr. María González'}</span>
+              </div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSealDialog(false)}>
+
+          <DialogFooter className="flex flex-row gap-3 sm:justify-end mt-2">
+            <Button variant="outline" onClick={() => setShowSealDialog(false)} className="flex-1 sm:flex-initial h-11 border-border font-medium">
               Cancelar
             </Button>
-            <Button onClick={handleSeal} disabled={isSealing}>
+            <Button onClick={handleSeal} disabled={isSealing} className="flex-1 sm:flex-initial h-11 bg-[#1e3a8a] hover:bg-[#172554] text-white font-medium">
               {isSealing ? 'Sellando...' : 'Confirmar Sellado'}
             </Button>
           </DialogFooter>
