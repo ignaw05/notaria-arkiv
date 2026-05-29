@@ -51,6 +51,15 @@ export default function LoginPage() {
           </p>
         </div>
 
+        <div className="bg-blue-50/80 border border-blue-100 text-blue-800 rounded-xl p-4 mb-6 text-sm text-center font-medium shadow-sm leading-relaxed">
+          💡 <strong>Demo Hackathon PunaTech:</strong> Usar esta cuenta de prueba para ingresar:<br />
+          <div className="mt-1.5 font-mono bg-blue-100/50 py-1.5 px-3 rounded-lg border border-blue-200 inline-flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
+            <span>Usuario: <strong className="select-all">admin@example.com</strong></span>
+            <span className="text-blue-300 hidden sm:inline">|</span>
+            <span>Clave: <strong className="select-all">admin1234</strong></span>
+          </div>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Bienvenido de Vuelta</CardTitle>
@@ -101,12 +110,6 @@ export default function LoginPage() {
                   'Iniciar sesión'
                 )}
               </Button>
-              <p className="text-sm text-muted-foreground text-center">
-                {"¿No tienes cuenta? "}
-                <Link href="/auth/sign-up" className="text-primary hover:underline">
-                  Crear una
-                </Link>
-              </p>
             </CardFooter>
           </form>
         </Card>

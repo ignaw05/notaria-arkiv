@@ -166,4 +166,4 @@ Una vez obtenida la clave de la entidad inmutable (ya sea por query en caliente 
 ---
 
 ## 📄 Licencia
-Este proyecto se distribuye bajo la Licencia MIT. Consultá el archivo [LICENSE](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/LICENSE) para más detalles.
+Este proyecto se distribuye bajo la Licencia MIT.
