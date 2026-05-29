@@ -75,7 +75,13 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
   const [isCorrectChain, setIsCorrectChain] = useState<boolean>(true)
   const [isConnecting, setIsConnecting] = useState<boolean>(false)
 
-  const BRAGA_CHAIN_ID = '0x3235' // 12853 in hex
+  const BRAGA_CHAIN_ID = '0xe0087f86e' // 60138453102 in hex
+
+  const isBragaChain = (chainId: any) => {
+    if (!chainId) return false
+    const idStr = String(chainId)
+    return idStr.toLowerCase() === BRAGA_CHAIN_ID || parseInt(idStr, 16) === 60138453102 || parseInt(idStr, 10) === 60138453102
+  }
 
   // Check if wallet is connected on mount
   useEffect(() => {
@@ -90,7 +96,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
             
             // Check chain ID
             const chainId = await ethereum.request({ method: 'eth_chainId' })
-            setIsCorrectChain(chainId === BRAGA_CHAIN_ID)
+            setIsCorrectChain(isBragaChain(chainId))
           }
         } catch (err) {
           console.error('Error checking wallet:', err)
@@ -117,8 +123,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
     }
 
     const handleChainChanged = (chainId: string) => {
-      // MetaMask returns hex chain IDs
-      setIsCorrectChain(chainId === BRAGA_CHAIN_ID || chainId === '12853')
+      setIsCorrectChain(isBragaChain(chainId))
     }
 
     ethereum.on('accountsChanged', handleAccountsChanged)
@@ -164,10 +169,10 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: BRAGA_CHAIN_ID,
-              chainName: 'Arkiv Braga Testnet',
+              chainName: 'Braga',
               nativeCurrency: {
-                name: 'Braga',
-                symbol: 'BRAGA',
+                name: 'Golem',
+                symbol: 'GLM',
                 decimals: 18,
               },
               rpcUrls: ['https://braga.hoodi.arkiv.network/rpc'],
@@ -203,7 +208,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
 
       // Verify chain
       const chainId = await ethereum.request({ method: 'eth_chainId' })
-      let correct = chainId === BRAGA_CHAIN_ID
+      let correct = isBragaChain(chainId)
       
       if (!correct) {
         correct = await switchNetwork()
