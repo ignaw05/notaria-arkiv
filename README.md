@@ -31,20 +31,27 @@ Pensemos en un caso concreto:
 
 **La confianza en la tecnología médica solo es posible cuando cada decisión asistida por IA queda grabada de forma irrefutable.**
 
-### 💡 Nuestra Solución
-Es por eso que creamos **NotarIA**, el escribano digital para decisiones médicas asistidas por IA.
+### 💡 Nuestra Solución (Flujo de la Aplicación)
+Es por eso que creamos **NotarIA**, el escribano digital para decisiones médicas asistidas por IA. El flujo de funcionamiento de la aplicación está integrado directamente en nuestro código y base de datos:
 
-NotarIA es un middleware de auditoría que transforma esas consultas en testimonios inmutables desde el momento en que ocurren. Cuando la consulta a la IA se realiza, el sistema captura la interacción completa, genera una huella digital única (un Hash SHA-256) y la inscribe en la red descentralizada de **Arkiv Network** como una entidad inmutable.
-
-Desde ese momento, ese registro existe en dos lugares: el contenido en la base de datos local y su huella en la blockchain. Si alguien entra a la base de datos y reescribe el prompt —aunque sea el propio médico, aunque sea el administrador del sistema, aunque sea el director del hospital— las huellas dejan de coincidir. El contenido cambió; la huella en Arkiv no. Y esa diferencia es irrefutable.
-
-* **Cumplimiento legal de privacidad:** El diseño cumple con la legislación vigente en cada capa. El texto completo de la conversación se almacena localmente bajo el estricto cumplimiento de la Ley 25.326 de Protección de Datos Personales. Lo que va a la blockchain no es la conversación en texto plano, sino su huella criptográfica. Trazabilidad total sin exponer información confidencial del paciente.
-* **Propuesta de valor y auditoría automática:** Volviendo al médico del caso: con NotarIA, cuando entra a la base de datos e intenta reescribir el prompt, lo puede hacer (el sistema no se lo impide). Pero cuando abre el panel de auditoría —o cuando un juez lo hace— la comparación es automática: el hash del contenido modificado no coincide con el hash inscripto en Arkiv en el momento de la consulta. Alerta roja. Integridad comprometida. El sello se rompe.
-* **Protección de doble vía:** Esto protege a ambos lados del sistema. Al paciente, que tiene garantía de que el historial de la decisión no puede ser reescrito para encubrir una negligencia. Y al médico diligente —al que sí escribió un prompt correcto, al que sí cargó los antecedentes, al que sí hizo las preguntas adecuadas— porque su registro original no puede ser alterado para hacerlo quedar mal.
-
-La Ley 26.529 exige que las historias clínicas sean íntegras e inalterables. La Ley 17.132 establece que el médico es el responsable final de cada decisión. NotarIA no cambia ninguna de las dos cosas; lo que hace es garantizar que el registro de lo que realmente ocurrió no pueda ser reescrito por nadie.
+1. **Contextualización Médica (Inicio de Consulta):** El médico inicia una *Nueva Consulta* para un paciente. El sistema extrae su historial médico (diagnósticos, cirugías, tratamientos) y lo utiliza para alimentar el contexto del chat clínico.
+2. **Encadenamiento de Mensajes Local:** Durante la consulta, el médico interactúa con la IA (alimentada por Gemini API con prompts estructurados). Cada mensaje del médico y respuesta del asistente se guarda en la base de datos local (`Supabase`) y se encadena criptográficamente registrando el `hash` y el `previous_hash` del mensaje anterior, formando un blockchain local de mensajes.
+3. **Resumen Inteligente:** Al sellar la sesión o al salir de la pantalla de consulta, se ejecuta un endpoint en segundo plano (`/api/session/[id]/summary`) que genera un resumen conciso de máximo 5 palabras de la sesión médica, optimizando la visualización del listado en el historial clínico del paciente.
+4. **Notarización Descentralizada (`createEntity`):** Al tocar *Sellar*, la sesión se bloquea (no admite más mensajes). Se compila el texto completo de la conversación en un formato canónico, se genera el hash SHA-256 final y se registra como una entidad en la red **Arkiv Network** (Braga Testnet) firmándolo con la clave de la wallet del médico (`ARKIV_PRIVATE_KEY`).
+5. **Auditoría en Caliente Basada en Atributos (`arkiv_query` y `getEntity`):**
+   * Cuando se solicita auditar una consulta sellada, el sistema realiza primero una búsqueda descentralizada en el nodo RPC de Arkiv (`arkiv_query`) buscando la entidad cuyo atributo `sessionId` coincida con la consulta. Esto evita confiar en el ID local almacenado en la base de datos.
+   * Con la clave resuelta, ejecuta `getEntity` para obtener la firma inmutable de la blockchain.
+   * Reconstruye el hash de la conversación usando los mensajes locales actuales. Si un administrador de base de datos o un hacker alteró retroactivamente un mensaje local, las firmas no coinciden y la app alerta visualmente **"Datos Manipulados"**, rompiendo el sello de confianza. Si son idénticos, valida la **"Conversación Íntegra"**.
 
 **No auditamos a la IA. Auditamos la verdad —y la verdad no debería depender de quién tiene acceso a la base de datos.**
+
+---
+
+## ⚖️ Marco Legal y Regulatorio
+NotarIA fue desarrollado respetando la normativa legal en cada una de sus capas de diseño:
+* **Ley 25.326 de Protección de Datos Personales (Argentina):** El texto completo de la consulta médica y la identidad real de los pacientes se almacenan localmente bajo medidas de seguridad y cifrado. A la red descentralizada pública de Arkiv **solo viaja el hash criptográfico de un solo sentido** y IDs relacionales anónimos, imposibilitando la ingeniería inversa de los datos médicos.
+* **Ley 26.529 (Derechos del Paciente y de la Historia Clínica):** Establece que los registros de salud deben ser íntegros e inalterables. NotarIA implementa esta inalterabilidad de manera técnica y matemática externa a la base de datos tradicional.
+* **Ley 17.132 (Ejercicio de la Medicina):** Declara al médico como el responsable final de cada prescripción o decisión clínica. NotarIA protege al médico responsable (demostrando inmutablemente la diligencia de su consulta) y al paciente (evitando que se reescriba el historial clínico para tapar un error médico).
 
 ---
 
