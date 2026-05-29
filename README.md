@@ -6,21 +6,45 @@
 ## 👥 Equipo y Proyecto
 * **Nombre del Proyecto:** NotarIA
 * **Integrantes del Equipo:**
-  * **Ignacio Wuilloud** - [@ignaciowuilloud](https://github.com/ignaciowuilloud) (GitHub)
+  * **Ignacio Wuilloud** - [@ignaw05](https://github.com/ignaw05) (GitHub)
 
 ---
 
 ## 🎯 Track, Problema y Solución
-* **Track Elegido:** Integración e Innovación con Arkiv Network (Notarización y Auditoría Descentralizada).
+* **Track Elegido:** Arkiv Network
 
 ### 🔍 Descripción del Problema
-En el sector salud, la alteración no autorizada de historiales clínicos y minutas de consulta representa un riesgo crítico de fraude, ocultamiento de mala praxis o manipulación de diagnósticos. Las bases de datos tradicionales de los sistemas de historias clínicas electrónicas (EHR) son centralizadas. Si un administrador con acceso root, un atacante o el propio prestador decide alterar un registro histórico, no hay un mecanismo inmutable e independiente que demuestre que el registro original fue modificado de forma retroactiva.
+La Inteligencia Artificial ya no es una promesa a futuro; es la infraestructura de hoy. Cada día, más industrias delegan tareas a la IA, desde la atención al cliente hasta decisiones que antes parecían exclusivas del juicio humano. En el sector salud, la adopción es masiva: cada vez más consultorios médicos y clínicas implementan software con IA para agilizar diagnósticos, analizar síntomas complejos y revisar interacciones medicamentosas.
+
+Pero hay un elefante en la sala: **la caja negra tecnológica**.
+
+Pensemos en un caso concreto:
+> Un médico atiende a un paciente de 67 años, hipertenso, con medicación preexistente. Está apurado. En lugar de redactar un prompt detallado con los antecedentes, la medicación actual y las contraindicaciones posibles, le pregunta a la IA de su clínica algo así como: *¿Puedo combinar este medicamento con ibuprofeno?* Sin contexto. Sin historial. Sin los datos que el sistema necesitaba para dar una respuesta precisa.
+> 
+> La IA responde. El médico, confiando en esa respuesta, emite la receta.
+> 
+> Dos semanas después, el paciente sufre una reacción adversa grave y denuncia al médico por mala praxis.
+> 
+> El médico sabe lo que hizo. Sabe que la consulta fue descuidada. Y sabe que si ese prompt aparece en el juicio, no tiene defensa. Entonces hace lo que cualquier persona con acceso a la base de datos de su clínica puede hacer: entra, modifica el prompt original, y escribe uno nuevo. Uno prolijo. Con antecedentes, con medicación preexistente y con todas las contraindicaciones bien detalladas. Un prompt que demuestra diligencia. Un prompt que nunca existió.
+> 
+> Y listo. La historia cambió. El médico negligente ahora parece un profesional impecable. El paciente pierde el juicio. Y nadie puede probar nada, porque el archivo dice exactamente lo que el médico quiso que dijera.
+
+**La confianza en la tecnología médica solo es posible cuando cada decisión asistida por IA queda grabada de forma irrefutable.**
 
 ### 💡 Nuestra Solución
-**NotarIA** resuelve esto combinando IA médica generativa con notarización inmutable en blockchain:
-1. **Asistente Clínico Inteligente:** El médico interactúa con un asistente IA (Gemini) durante la consulta para estructurar información en bullets, alternativas y resúmenes automáticos basados exclusivamente en el historial médico del paciente.
-2. **Sellado Criptográfico Inmutable:** Al finalizar la consulta, el médico realiza un "Sellado". Esto calcula el hash SHA-256 encadenado de la conversación completa y lo registra en **Arkiv Network** (testnet Braga) firmándolo digitalmente.
-3. **Auditoría Descentralizada de Integridad:** Un motor de auditoría permite verificar en caliente si la base de datos actual coincide con el bloque registrado. Cualquier alteración de un solo caracter en los mensajes guardados en Supabase o en las firmas locales romperá la concordancia de hash y el sistema alertará inmediatamente la manipulación del historial clínico.
+Es por eso que creamos **NotarIA**, el escribano digital para decisiones médicas asistidas por IA.
+
+NotarIA es un middleware de auditoría que transforma esas consultas en testimonios inmutables desde el momento en que ocurren. Cuando la consulta a la IA se realiza, el sistema captura la interacción completa, genera una huella digital única (un Hash SHA-256) y la inscribe en la red descentralizada de **Arkiv Network** como una entidad inmutable.
+
+Desde ese momento, ese registro existe en dos lugares: el contenido en la base de datos local y su huella en la blockchain. Si alguien entra a la base de datos y reescribe el prompt —aunque sea el propio médico, aunque sea el administrador del sistema, aunque sea el director del hospital— las huellas dejan de coincidir. El contenido cambió; la huella en Arkiv no. Y esa diferencia es irrefutable.
+
+* **Cumplimiento legal de privacidad:** El diseño cumple con la legislación vigente en cada capa. El texto completo de la conversación se almacena localmente bajo el estricto cumplimiento de la Ley 25.326 de Protección de Datos Personales. Lo que va a la blockchain no es la conversación en texto plano, sino su huella criptográfica. Trazabilidad total sin exponer información confidencial del paciente.
+* **Propuesta de valor y auditoría automática:** Volviendo al médico del caso: con NotarIA, cuando entra a la base de datos e intenta reescribir el prompt, lo puede hacer (el sistema no se lo impide). Pero cuando abre el panel de auditoría —o cuando un juez lo hace— la comparación es automática: el hash del contenido modificado no coincide con el hash inscripto en Arkiv en el momento de la consulta. Alerta roja. Integridad comprometida. El sello se rompe.
+* **Protección de doble vía:** Esto protege a ambos lados del sistema. Al paciente, que tiene garantía de que el historial de la decisión no puede ser reescrito para encubrir una negligencia. Y al médico diligente —al que sí escribió un prompt correcto, al que sí cargó los antecedentes, al que sí hizo las preguntas adecuadas— porque su registro original no puede ser alterado para hacerlo quedar mal.
+
+La Ley 26.529 exige que las historias clínicas sean íntegras e inalterables. La Ley 17.132 establece que el médico es el responsable final de cada decisión. NotarIA no cambia ninguna de las dos cosas; lo que hace es garantizar que el registro de lo que realmente ocurrió no pueda ser reescrito por nadie.
+
+**No auditamos a la IA. Auditamos la verdad —y la verdad no debería depender de quién tiene acceso a la base de datos.**
 
 ---
 
