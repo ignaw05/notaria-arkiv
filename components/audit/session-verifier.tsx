@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { verifyHashChain } from '@/lib/crypto'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Shield, Search, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AuditResultDialog } from './audit-result-dialog'
+import type { AuditResult } from '@/lib/types'
 
 interface MessageData {
   id: string
@@ -31,25 +30,11 @@ export function SessionVerifier({ userId }: SessionVerifierProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [messages, setMessages] = useState<MessageData[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [auditResult, setAuditResult] = useState<{
-    valid: boolean
-    wasManipulated: boolean
-    sessionId: string
-    hashes: { reconstructed: string; stored: string; match: boolean }
-    arkiv: {
-      configured: boolean
-      verified: boolean
-      entityKey: string | null
-      storedHash: string | null
-      timestamp: number | null
-      blockNumber: number | null
-      explorerUrl: string | null
-    }
-  } | null>(null)
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
 
   const loadAndVerifySession = async () => {
     if (!sessionId.trim()) {
-      toast.error('Please enter a session ID')
+      toast.error('Por favor, ingresa un ID de sesión válido')
       return
     }
 
@@ -58,100 +43,28 @@ export function SessionVerifier({ userId }: SessionVerifierProps) {
     setMessages([])
 
     try {
-      const supabase = createClient()
+      // Call the API endpoint which conducts complete cryptographic validation and queries Arkiv Network
+      const res = await fetch(`/api/session/${sessionId.trim()}/audit`)
+      const data = await res.json()
 
-      // Fetch session
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions')
-        .select(`
-          *,
-          profiles:doctor_id(full_name, email, institution)
-        `)
-        .eq('id', sessionId.trim())
-        .single()
-
-      if (sessionError || !sessionData) {
-        toast.error('Session not found')
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'Error al verificar la sesión')
         setIsLoading(false)
         return
       }
 
-      // Fetch messages
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('session_id', sessionId.trim())
-        .order('created_at', { ascending: true })
-
-      if (messagesError) throw messagesError
-
-      setMessages(messagesData || [])
-
-      // Verify hash chain
-      const result = await verifyHashChain(
-        (messagesData || []).map((m) => ({
-          content: m.content,
-          role: m.role,
-          created_at: m.created_at,
-          hash: m.hash,
-          previous_hash: m.previous_hash,
-        }))
-      )
-
-      // Record verification
-      await supabase.from('integrity_verifications').insert({
-        session_id: sessionId.trim(),
-        verified_by: userId,
-        is_valid: result.isValid,
-        verification_details: {
-          brokenAt: result.brokenAt,
-          details: result.details,
-          messageCount: messagesData?.length || 0,
-          verifiedAt: new Date().toISOString(),
-        },
-      })
-
-      // Log audit action
-      await supabase.from('audit_logs').insert({
-        action: 'session_verified',
-        actor_id: userId,
-        resource_type: 'session',
-        resource_id: sessionId.trim(),
-        details: {
-          isValid: result.isValid,
-          messageCount: messagesData?.length || 0,
-        },
-      })
-
-      // Build AuditResult shape and open dialog
-      const reconstructedHash = messagesData?.length
-        ? messagesData[messagesData.length - 1].hash
-        : ''
-      setAuditResult({
-        valid: result.isValid,
-        wasManipulated: !result.isValid,
-        sessionId: sessionId.trim(),
-        hashes: {
-          reconstructed: reconstructedHash,
-          stored: sessionData.session_hash ?? '',
-          match: result.isValid,
-        },
-        arkiv: {
-          configured: !!sessionData.arkiv_entity_key && !sessionData.arkiv_entity_key.startsWith('local_'),
-          verified: result.isValid,
-          entityKey: sessionData.arkiv_entity_key ?? null,
-          storedHash: sessionData.arkiv_stored_hash ?? null,
-          timestamp: sessionData.arkiv_timestamp ?? null,
-          blockNumber: sessionData.arkiv_block_number ?? null,
-          explorerUrl: sessionData.arkiv_explorer_url ?? null,
-        },
-      })
+      setMessages(data.messages || [])
+      setAuditResult(data.auditResult)
       setDialogOpen(true)
 
-      toast.success(result.isValid ? 'Session verified successfully' : 'Session verification failed')
+      if (data.valid) {
+        toast.success('Sesión verificada correctamente')
+      } else {
+        toast.error('La verificación de integridad de la sesión falló')
+      }
     } catch (error) {
       console.error('Verification failed:', error)
-      toast.error('Failed to verify session')
+      toast.error('Error al conectar con el servidor para la verificación')
     } finally {
       setIsLoading(false)
     }

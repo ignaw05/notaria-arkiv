@@ -12,6 +12,7 @@ export interface Profile {
   institution: string | null
   specialty: string | null
   license_number: string | null
+  wallet_address: string | null
   created_at: string
   updated_at: string
 }
@@ -148,5 +149,6 @@ export interface AuditResult {
     blockNumber: number | null
     explorerUrl: string | null
     usedArkivQuery?: boolean
+    owner?: string | null
   }
 }

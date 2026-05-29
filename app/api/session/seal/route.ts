@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // Get session with patient info
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('*, patients(id, full_name)')
+      .select('*, patients(id, full_name, arkiv_entity_id)')
       .eq('id', sessionId)
       .single()
 
@@ -64,6 +64,13 @@ export async function POST(req: Request) {
     let arkivEntityKey: string | null = null
     let arkivTxHash: string | null = null
 
+    // Fetch doctor's profile to check if they have a wallet connected
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('wallet_address')
+      .eq('id', user.id)
+      .single()
+
     // Register on Arkiv Network if configured
     if (isArkivConfigured()) {
       try {
@@ -75,6 +82,8 @@ export async function POST(req: Request) {
             patientId: session.patient_id || 'anonymous',
             messageCount: messages.length,
             sealedAt: closedAt,
+            patientEntityKey: session.patients?.arkiv_entity_id || null,
+            ownerWalletAddress: profile?.wallet_address || null,
           }
         )
         arkivEntityKey = arkivResult.entityKey

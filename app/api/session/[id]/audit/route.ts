@@ -84,6 +84,7 @@ export async function GET(
     let arkivStoredHash: string | null = null
     let arkivTimestamp: number | null = null
     let arkivBlockNumber: number | null = null
+    let arkivOwner: string | null = null
     let resolvedEntityId = session.arkiv_entity_id
     let usedArkivQuery = false
     
@@ -110,6 +111,7 @@ export async function GET(
         arkivStoredHash = arkivResult.storedHash
         arkivTimestamp = arkivResult.timestamp
         arkivBlockNumber = arkivResult.blockNumber || null
+        arkivOwner = arkivResult.owner || null
       } catch (arkivError) {
         console.error('[Arkiv] Error verifying session:', arkivError)
       }
@@ -156,6 +158,7 @@ export async function GET(
           ? getArkivExplorerUrl(resolvedEntityId)
           : null,
         usedArkivQuery,
+        owner: arkivOwner,
       },
     }
 
@@ -174,6 +177,7 @@ export async function GET(
         storedHash,
         arkivEntityId: resolvedEntityId,
         usedArkivQuery,
+        arkivOwner,
       },
     })
 
@@ -191,6 +195,7 @@ export async function GET(
         arkivStoredHash,
         arkivTimestamp,
         arkivBlockNumber,
+        arkivOwner,
         reconstructedHash,
         storedHash,
         wasManipulated,
@@ -226,6 +231,7 @@ export async function GET(
           ? getArkivExplorerUrl(resolvedEntityId)
           : null,
         usedArkivQuery,
+        owner: arkivOwner,
       },
       session: {
         id: sessionId,

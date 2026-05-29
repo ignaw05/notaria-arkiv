@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { registerPatientOnArkiv, isArkivConfigured } from '@/lib/arkiv'
 
 // GET /api/patients - List all patients for the current doctor
 export async function GET() {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
     )
   }
   
+  // Insert patient first
   const { data: patient, error } = await supabase
     .from('patients')
     .insert({
@@ -73,6 +75,36 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Fetch doctor's profile to check if they have a wallet connected
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('wallet_address')
+    .eq('id', user.id)
+    .single()
+
+  let arkivEntityId: string | null = null
+  let arkivTxHash: string | null = null
+
+  if (isArkivConfigured()) {
+    try {
+      const arkivResult = await registerPatientOnArkiv(
+        patient.id,
+        fullName,
+        profile?.wallet_address
+      )
+      arkivEntityId = arkivResult.entityKey
+      arkivTxHash = arkivResult.txHash
+
+      // Update patient with arkiv entity ID
+      await supabase
+        .from('patients')
+        .update({ arkiv_entity_id: arkivEntityId })
+        .eq('id', patient.id)
+    } catch (arkivError) {
+      console.error('[Arkiv] Error registering patient:', arkivError)
+    }
+  }
   
   // Log audit
   await supabase.from('audit_logs').insert({
@@ -80,8 +112,19 @@ export async function POST(request: NextRequest) {
     actor_id: user.id,
     resource_type: 'patient',
     resource_id: patient.id,
-    details: { fullName, dateOfBirth },
+    details: { 
+      fullName, 
+      dateOfBirth,
+      arkivEntityId,
+      arkivTxHash,
+      walletAddress: profile?.wallet_address || null
+    },
   })
   
-  return NextResponse.json({ patient }, { status: 201 })
+  return NextResponse.json({ 
+    patient: { 
+      ...patient, 
+      arkiv_entity_id: arkivEntityId 
+    } 
+  }, { status: 201 })
 }

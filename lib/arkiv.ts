@@ -35,8 +35,15 @@ export interface ArkivSessionPayload {
   hash: string
   doctorId: string
   patientId: string
+  patientEntityKey?: string | null
   messageCount: number
   sealedAt: string
+}
+
+export interface ArkivPatientPayload {
+  type: 'patient'
+  patientId: string
+  name: string
 }
 
 export interface ArkivVerificationResult {
@@ -47,6 +54,52 @@ export interface ArkivVerificationResult {
   timestamp: number
   blockNumber?: number
   txHash?: string
+  owner?: string
+}
+
+/**
+ * Register a patient on Arkiv Network using createEntity
+ */
+export async function registerPatientOnArkiv(
+  patientId: string,
+  name: string,
+  ownerWalletAddress?: string | null
+): Promise<{ entityKey: string; txHash: string }> {
+  const walletClient = getArkivWalletClient()
+  
+  const payload: ArkivPatientPayload = {
+    type: 'patient',
+    patientId,
+    name,
+  }
+  
+  const { entityKey, txHash } = await walletClient.createEntity({
+    payload: jsonToPayload(payload),
+    contentType: 'application/json',
+    attributes: [
+      { key: 'type', value: 'patient' },
+      { key: 'patientId', value: patientId },
+      { key: 'app', value: 'notaria' },
+    ],
+    expiresIn: 315360000, // 10 years in seconds
+  })
+
+  let finalTxHash: string = txHash
+  if (ownerWalletAddress) {
+    try {
+      console.log(`[Arkiv] Transferring ownership of patient entity ${entityKey} to ${ownerWalletAddress}`)
+      const transferResult = await walletClient.changeOwnership({
+        entityKey,
+        newOwner: ownerWalletAddress as `0x${string}`
+      })
+      finalTxHash = transferResult.txHash
+      console.log(`[Arkiv] Patient ownership transferred successfully in tx ${finalTxHash}`)
+    } catch (transferError) {
+      console.error('[Arkiv] Error transferring patient ownership to user wallet:', transferError)
+    }
+  }
+  
+  return { entityKey, txHash: finalTxHash }
 }
 
 /**
@@ -61,6 +114,8 @@ export async function registerSessionOnArkiv(
     patientId: string
     messageCount: number
     sealedAt: string
+    patientEntityKey?: string | null
+    ownerWalletAddress?: string | null
   }
 ): Promise<{ entityKey: string; txHash: string }> {
   const walletClient = getArkivWalletClient()
@@ -72,24 +127,48 @@ export async function registerSessionOnArkiv(
     hash: sessionHash,
     doctorId: metadata.doctorId,
     patientId: metadata.patientId,
+    patientEntityKey: metadata.patientEntityKey || null,
     messageCount: metadata.messageCount,
     sealedAt: metadata.sealedAt,
+  }
+  
+  const attributes = [
+    { key: 'type', value: 'clinical_session' },
+    { key: 'sessionId', value: sessionId },
+    { key: 'hash', value: sessionHash },
+    { key: 'app', value: 'notaria' },
+    { key: 'doctorId', value: metadata.doctorId },
+    { key: 'patientId', value: metadata.patientId },
+  ]
+
+  if (metadata.patientEntityKey) {
+    attributes.push({ key: 'patientEntityKey', value: metadata.patientEntityKey })
   }
   
   // Create entity on Arkiv Network
   const { entityKey, txHash } = await walletClient.createEntity({
     payload: jsonToPayload(payload),
     contentType: 'application/json',
-    attributes: [
-      { key: 'type', value: 'clinical_session' },
-      { key: 'sessionId', value: sessionId },
-      { key: 'hash', value: sessionHash },
-      { key: 'app', value: 'notaria' },
-    ],
-    expiresIn: 31536000, // 1 year in seconds
+    attributes,
+    expiresIn: 157680000, // 5 years in seconds
   })
+
+  let finalTxHash: string = txHash
+  if (metadata.ownerWalletAddress) {
+    try {
+      console.log(`[Arkiv] Transferring ownership of session entity ${entityKey} to ${metadata.ownerWalletAddress}`)
+      const transferResult = await walletClient.changeOwnership({
+        entityKey,
+        newOwner: metadata.ownerWalletAddress as `0x${string}`
+      })
+      finalTxHash = transferResult.txHash
+      console.log(`[Arkiv] Session ownership transferred successfully in tx ${finalTxHash}`)
+    } catch (transferError) {
+      console.error('[Arkiv] Error transferring session ownership to user wallet:', transferError)
+    }
+  }
   
-  return { entityKey, txHash }
+  return { entityKey, txHash: finalTxHash }
 }
 
 /**
@@ -124,6 +203,7 @@ export async function verifySessionOnArkiv(
       currentHash,
       timestamp: Date.now(), // Entity doesn't expose timestamp directly
       blockNumber: undefined,
+      owner: entity.owner,
     }
   } catch (error) {
     console.error('[Arkiv] Verification error:', error)

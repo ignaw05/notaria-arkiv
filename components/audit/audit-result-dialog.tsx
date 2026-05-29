@@ -13,30 +13,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import type { AuditResult } from '@/lib/types'
 
 interface AuditResultDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  result: {
-    valid: boolean
-    wasManipulated: boolean
-    sessionId: string
-    hashes: {
-      reconstructed: string
-      stored: string
-      match: boolean
-    }
-    arkiv: {
-      configured: boolean
-      verified: boolean
-      entityKey: string | null
-      storedHash: string | null
-      timestamp: number | null
-      blockNumber: number | null
-      explorerUrl: string | null
-      usedArkivQuery?: boolean
-    }
-  }
+  result: AuditResult
 }
 
 export function AuditResultDialog({
@@ -173,6 +155,18 @@ export function AuditResultDialog({
                       </span>
                     )}
                   </div>
+
+                  {result.arkiv.owner && (
+                    <div className="space-y-1 sm:col-span-2 border-t border-border/40 pt-3 mt-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Shield className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        Propietario de la Entidad (Wallet)
+                      </span>
+                      <code className="block text-xs font-mono break-all text-foreground/80 bg-muted/50 px-2.5 py-1.5 rounded border border-border/20 leading-relaxed select-all">
+                        {result.arkiv.owner}
+                      </code>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
