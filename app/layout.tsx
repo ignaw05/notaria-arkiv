@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'NotarIA - Arkiv Clinical Witness',
-  description: 'AI-powered clinical decision support with immutable audit trails for healthcare compliance',
+  title: 'NotarIA',
+  description: 'Soporte de decisiones clínicas y registro inmutable para cumplimiento en salud.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -98,7 +98,6 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
           <Shield className="h-6 w-6 text-sidebar-primary" />
           <div className="flex flex-col">
             <span className="text-sm font-semibold text-sidebar-foreground">NotarIA</span>
-            <span className="text-xs text-sidebar-foreground/60">Clinical Witness</span>
           </div>
         </div>
       </SidebarHeader>
