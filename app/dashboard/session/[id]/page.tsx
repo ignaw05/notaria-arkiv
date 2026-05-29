@@ -80,7 +80,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 function getRiskColor(level: string | null) {
   const colors: Record<string, string> = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    low: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
     medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
     critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
@@ -377,7 +377,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           <div className="flex items-center gap-3">
             {session.is_active ? (
               <>
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400 flex items-center gap-1">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Activa
                 </Badge>
@@ -411,7 +411,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       <ScrollArea className="flex-1 p-6">
         <div className="max-w-5xl mx-auto space-y-6">
           {messagesLoading ? (
-            <div className="space-y-6 py-4 animate-pulse">
+            <div className="space-y-6 py-4">
               <div className="flex gap-3 justify-start">
                 <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
                 <div className="space-y-2 flex-1 max-w-[65%]">
@@ -517,9 +517,9 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                 </div>
                 <div className="bg-card border rounded-lg p-4">
                   <div className="flex items-center gap-1.5 h-5 px-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full" />
                   </div>
                 </div>
               </div>
@@ -615,7 +615,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-green-600" />
+              <ShieldCheck className="h-5 w-5 text-blue-600" />
               Sesion Sellada Exitosamente
             </DialogTitle>
             <DialogDescription>
@@ -640,7 +640,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               {sealResult.arkivConfigured && sealResult.arkivEntityKey && !sealResult.arkivEntityKey.startsWith('local_') ? (
                 <div className="space-y-3">
                   <Separator />
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-blue-600">
                     <Shield className="h-4 w-4" />
                     <span className="font-medium">Registrado en Arkiv Network</span>
                   </div>
