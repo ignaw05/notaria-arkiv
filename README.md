@@ -93,6 +93,30 @@ Para el diseño y desarrollo de este proyecto se utilizaron las siguientes herra
 
 ---
 
+## 🔐 ¿Qué datos se almacenan o verifican en Arkiv y por qué?
+
+Para cumplir con las regulaciones de privacidad médica (como **HIPAA** y **GDPR**), el sistema sigue un principio estricto de **cero almacenamiento de información de salud protegida (PII/PHI) en la blockchain**:
+
+### 1. ¿Qué datos se almacenan en Arkiv?
+Al sellar una consulta, se registra una entidad en Braga Testnet con los siguientes datos:
+* **Firma Criptográfica (Hash SHA-256):** Un hash de un solo sentido generado a partir de la concatenación ordenada de la conversación (`"role: mensaje | role: mensaje"`).
+* **Atributos de Indexación (Metadatos):**
+  * `app = "notaria"`
+  * `type = "clinical_session"`
+  * `sessionId`: El ID único del registro local.
+  * `sealedAt`: Timestamp del sellado.
+
+### 2. ¿Qué datos NO se almacenan?
+* **Ningún dato clínico en texto plano:** No se suben diagnósticos, síntomas, recetas ni el contenido de las conversaciones.
+* **Ningún dato de identificación personal:** No se suben nombres de pacientes, documentos (DNI), direcciones, ni datos de los profesionales de salud.
+
+### 3. ¿Por qué se hace de esta manera?
+* **Privacidad por Diseño (Compliance):** Almacenar información de salud protegida en un registro descentralizado público es ilegal e inviable. El uso de hashes asegura confidencialidad matemática absoluta.
+* **Inmutabilidad y Detección de Fraude:** El hash actúa como una huella digital única. Si un atacante o base de datos centralizada altera retrospectivamente un solo caracter de la conversación, el hash reconstruido localmente diferirá del hash inmutable de Arkiv, alertando al instante que la consulta fue manipulada.
+* **Auditoría Independiente:** Los metadatos de indexación permiten a un auditor consultar en Arkiv (`arkiv_query`) si una sesión existe y cuál es su firma, pudiendo verificar la validez de los datos de manera externa y autónoma.
+
+---
+
 ## 🔗 Integración Detallada con Arkiv Network
 NotarIA utiliza tres capacidades del SDK de Arkiv para descentralizar la confianza médica:
 
