@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { registerPatientOnArkiv, isArkivConfigured } from '@/lib/arkiv'
+import { registerPatientOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
 
 // GET /api/patients - List all patients for the current doctor
 export async function GET() {
@@ -125,6 +125,12 @@ export async function POST(request: NextRequest) {
     patient: { 
       ...patient, 
       arkiv_entity_id: arkivEntityId 
-    } 
+    },
+    arkiv: isArkivConfigured() ? {
+      entityKey: arkivEntityId,
+      txHash: arkivTxHash,
+      explorerUrl: arkivEntityId ? getArkivExplorerUrl(arkivEntityId) : null,
+      txUrl: arkivTxHash ? getArkivTxUrl(arkivTxHash) : null,
+    } : null
   }, { status: 201 })
 }

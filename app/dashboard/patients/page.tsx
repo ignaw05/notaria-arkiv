@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { Plus, User, Calendar, FileText, MessageSquare, History, ChevronRight, Clock, Activity } from 'lucide-react'
+import { Plus, User, Calendar, FileText, MessageSquare, History, ChevronRight, Clock, Activity, ShieldCheck, ExternalLink, Copy, Check, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format, differenceInYears, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -82,6 +82,20 @@ export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [isAddHistoryOpen, setIsAddHistoryOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [arkivInfo, setArkivInfo] = useState<{
+    entityKey: string | null
+    txHash: string | null
+    explorerUrl: string | null
+    txUrl: string | null
+    patientName: string
+  } | null>(null)
+  const [copiedText, setCopiedText] = useState<string | null>(null)
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedText(text)
+    setTimeout(() => setCopiedText(null), 2000)
+  }
 
   // Create patient form state
   const [newPatient, setNewPatient] = useState({
@@ -114,7 +128,20 @@ export default function PatientsPage() {
 
       if (!res.ok) throw new Error('Error al crear paciente')
 
-      toast.success('Paciente creado exitosamente')
+      const data = await res.json()
+      
+      if (data.arkiv && data.arkiv.entityKey) {
+        setArkivInfo({
+          entityKey: data.arkiv.entityKey,
+          txHash: data.arkiv.txHash,
+          explorerUrl: data.arkiv.explorerUrl,
+          txUrl: data.arkiv.txUrl,
+          patientName: data.patient.full_name
+        })
+      } else {
+        toast.success('Paciente creado exitosamente')
+      }
+
       setNewPatient({ fullName: '', dateOfBirth: '', identifier: '', notes: '' })
       setIsCreateOpen(false)
       mutate()
@@ -418,6 +445,87 @@ export default function PatientsPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+      {/* Arkiv Patient Notarization Success Dialog */}
+      <Dialog open={arkivInfo !== null} onOpenChange={(open) => !open && setArkivInfo(null)}>
+        {arkivInfo && (
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="mx-auto bg-green-500/10 p-3 rounded-full text-green-600 mb-2 w-fit">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <DialogTitle className="text-center text-lg font-bold">
+                ¡Paciente Notarizado Exitosamente!
+              </DialogTitle>
+              <DialogDescription className="text-center text-xs">
+                Se ha generado un registro médico inmutable y protegido para <span className="font-semibold text-foreground">{arkivInfo.patientName}</span> en Arkiv Network.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 my-2 text-xs">
+              <div className="space-y-1">
+                <p className="text-muted-foreground font-semibold">Identificador de Registro Público (Entity Key)</p>
+                <div className="flex items-center gap-1.5 bg-muted/40 p-2 rounded border border-border/50">
+                  <code className="font-mono text-foreground text-[10px] break-all flex-1">
+                    {arkivInfo.entityKey}
+                  </code>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-5 w-5 hover:bg-background shrink-0"
+                    onClick={() => arkivInfo.entityKey && handleCopy(arkivInfo.entityKey)}
+                  >
+                    {copiedText === arkivInfo.entityKey ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+
+              {arkivInfo.txHash && (
+                <div className="space-y-1">
+                  <p className="text-muted-foreground font-semibold">Hash de Transacción Braga</p>
+                  <div className="flex items-center gap-1.5 bg-muted/40 p-2 rounded border border-border/50">
+                    <code className="font-mono text-foreground text-[10px] break-all flex-1">
+                      {arkivInfo.txHash}
+                    </code>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-5 w-5 hover:bg-background shrink-0"
+                      onClick={() => arkivInfo.txHash && handleCopy(arkivInfo.txHash)}
+                    >
+                      {copiedText === arkivInfo.txHash ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 pt-2">
+                {arkivInfo.explorerUrl && (
+                  <Button asChild variant="outline" size="sm" className="h-9 gap-1.5 w-full">
+                    <a href={arkivInfo.explorerUrl} target="_blank" rel="noopener noreferrer">
+                      Verificar Registro en la Red
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </Button>
+                )}
+                {arkivInfo.txUrl && (
+                  <Button asChild variant="outline" size="sm" className="h-9 gap-1.5 w-full">
+                    <a href={arkivInfo.txUrl} target="_blank" rel="noopener noreferrer">
+                      Ver Transacción en Explorador
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <DialogFooter className="sm:justify-center">
+              <Button onClick={() => setArkivInfo(null)} className="w-full sm:max-w-[120px]">
+                Entendido
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
       </Dialog>
     </div>
   )
