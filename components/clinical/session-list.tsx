@@ -10,20 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Clock,
   MessageSquare,
-  Hash,
   Search,
   Eye,
-  CheckCircle2,
 } from 'lucide-react'
 
 interface SessionWithCounts extends Session {
@@ -79,61 +68,55 @@ export function SessionList({ sessions, userId }: SessionListProps) {
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Consulta</TableHead>
-              <TableHead className="max-w-[400px]">Resumen por IA</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <CardContent className="p-6">
+          <div className="space-y-3">
             {filteredSessions.map((session) => (
-              <TableRow key={session.id}>
-                <TableCell>
-                  <div className="font-medium">
-                    {session.title || 'Consulta sin título'}
+              <div
+                key={session.id}
+                className="border border-border/80 rounded-lg p-3.5 hover:border-border hover:shadow-sm hover:bg-muted/10 transition-all"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                  {/* Session Info */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-start sm:items-center gap-2.5 flex-col sm:flex-row">
+                      <div className="font-semibold text-sm text-foreground truncate max-w-[200px]" title={session.title || 'Consulta'}>
+                        {session.title || 'Consulta sin título'}
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs border shrink-0 ${
+                          session.is_active
+                            ? 'bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-400'
+                            : 'bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400'
+                        }`}
+                      >
+                        {session.is_active ? 'Activa' : 'Sellada'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed italic line-clamp-2">
+                      {session.summary || 'Resumen no disponible. Se generará al finalizar la conversación.'}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-0.5">
+                      <span className="font-mono bg-muted/60 px-1 rounded text-[10px]">#{session.id.slice(0, 8)}</span>
+                      <span>•</span>
+                      <span>{formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: es })}</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Hash className="h-3 w-3" />
-                    {session.id.slice(0, 8)}...
+
+                  {/* Actions */}
+                  <div className="flex shrink-0 items-center justify-end">
+                    <Button asChild variant="outline" size="sm" className="h-8">
+                      <Link href={`/dashboard/session/${session.id}`}>
+                        <Eye className="w-4 h-4 mr-1.5" />
+                        Ver
+                      </Link>
+                    </Button>
                   </div>
-                </TableCell>
-                <TableCell className="max-w-[400px]">
-                  <p className="text-sm text-foreground/80 line-clamp-2 leading-relaxed italic">
-                    {session.summary || 'Resumen no disponible. Se generará al finalizar la conversación.'}
-                  </p>
-                </TableCell>
-                <TableCell>
-                  {session.is_active ? (
-                    <Badge variant="outline" className="gap-1 text-amber-600 border-amber-200 bg-amber-50">
-                      <Clock className="h-3 w-3" />
-                      Activa
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Sellada
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: es })}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/dashboard/session/${session.id}`}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        </CardContent>
       </Card>
     </div>
   )
