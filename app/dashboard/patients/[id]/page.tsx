@@ -176,9 +176,63 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   if (isLoading || !data?.patient) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-36 rounded-xl" />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-12 items-start">
+          {/* Left Column - Medical History Skeleton */}
+          <div className="border border-slate-100 shadow-sm rounded-2xl p-6 lg:col-span-5 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-36" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded-xl" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border border-slate-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-5 w-20 rounded" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column - Sessions Skeleton */}
+          <div className="border border-slate-100 shadow-sm rounded-2xl p-6 lg:col-span-7 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-28" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border border-slate-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-1/2" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
