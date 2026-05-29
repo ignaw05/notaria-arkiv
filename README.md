@@ -162,3 +162,8 @@ Durante el proceso de auditoría y verificación en caliente, la aplicación no 
 ### 3. Recuperación de Entidades (`getEntity`)
 Una vez obtenida la clave de la entidad inmutable (ya sea por query en caliente o fallback de la base de datos), el sistema descarga el payload inmutable desde Arkiv Network para comprobar su validez.
 * **Funcionamiento:** Llama a `arkivPublicClient.getEntity(entityKey)` para obtener el payload almacenado de forma inmutable en la red. Compara el campo `hash` de los datos de la red con el hash obtenido al reconstruir localmente la conversación con los mensajes actuales de Supabase. Si coinciden, la auditoría muestra un estado verde de **Conversación Íntegra**; si difieren, arroja un estado rojo de **Datos Manipulados**.
+
+---
+
+## 📄 Licencia
+Este proyecto se distribuye bajo la Licencia MIT. Consultá el archivo [LICENSE](file:///Users/ignaciowuilloud/Documents/notarIA-arkiv/notaria-arkiv/LICENSE) para más detalles.
