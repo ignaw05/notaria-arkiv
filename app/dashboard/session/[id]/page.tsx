@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { 
   ArrowLeft, Send, Shield, ShieldCheck, ShieldX, ShieldAlert, 
   Lock, Clock, User, Bot, AlertTriangle, CheckCircle, XCircle,
-  FileText, Hash, Calendar, CheckCircle2
+  FileText, Hash, Calendar, CheckCircle2, ExternalLink
 } from 'lucide-react'
 import { AuditResultDialog } from '@/components/audit/audit-result-dialog'
 import type { AuditResult as AuditResultType } from '@/lib/types'
@@ -628,17 +628,19 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                   )}
 
                   {/* Explorer Links */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-3 pt-2">
                     {sealResult.arkivExplorerUrl && (
-                      <Button variant="outline" size="sm" asChild className="flex-1">
-                        <a href={sealResult.arkivExplorerUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" asChild className="flex-1 h-10 border-border">
+                        <a href={sealResult.arkivExplorerUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 font-medium">
+                          <ExternalLink className="w-4 h-4" />
                           Ver Entity en Explorer
                         </a>
                       </Button>
                     )}
                     {sealResult.arkivTxUrl && (
-                      <Button variant="outline" size="sm" asChild className="flex-1">
-                        <a href={sealResult.arkivTxUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" asChild className="flex-1 h-10 border-border">
+                        <a href={sealResult.arkivTxUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 font-medium">
+                          <ExternalLink className="w-4 h-4" />
                           Ver Transaccion
                         </a>
                       </Button>
@@ -654,14 +656,15 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                   </AlertDescription>
                 </Alert>
               )}
+              
+              <Button 
+                onClick={() => setShowSealResultDialog(false)} 
+                className="w-full bg-[#1e3a8a] hover:bg-[#172554] text-white h-11 font-medium mt-2"
+              >
+                Entendido
+              </Button>
             </div>
           )}
-
-          <DialogFooter>
-            <Button onClick={() => setShowSealResultDialog(false)}>
-              Entendido
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
