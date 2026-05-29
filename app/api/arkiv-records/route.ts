@@ -35,10 +35,15 @@ export async function GET() {
     }
 
     const doctorPatientIds = new Set(dbPatients?.map(p => p.id) || [])
+    const doctorWalletLower = profile?.wallet_address?.toLowerCase() || ''
 
-    // Filter on-chain patients to only those belonging to this doctor, and correlate data
+    // Filter on-chain patients to only those belonging to this doctor and owned by their connected wallet, and correlate data
     const correlatedPatients = arkivPatients
-      .filter(ap => doctorPatientIds.has(ap.payload.patientId))
+      .filter(ap => {
+        const belongsToDoctor = doctorPatientIds.has(ap.payload.patientId)
+        const isOwnedByWallet = doctorWalletLower && ap.owner?.toLowerCase() === doctorWalletLower
+        return belongsToDoctor && isOwnedByWallet
+      })
       .map(ap => {
         const dbPatient = dbPatients?.find(p => p.id === ap.payload.patientId)
         return {
@@ -64,24 +69,26 @@ export async function GET() {
       console.error('Error fetching database sessions:', dbSessionsError)
     }
 
-    // Correlate on-chain sessions with database session details
-    const correlatedSessions = arkivSessions.map(as => {
-      const dbSession = dbSessions?.find(s => s.id === as.payload.sessionId)
-      return {
-        id: as.payload.sessionId,
-        title: dbSession?.title || 'Sesión Clínica',
-        patientId: as.payload.patientId,
-        patientName: dbSession?.patients?.full_name || 'Paciente Desconocido',
-        hash: as.payload.hash,
-        entityKey: as.key,
-        owner: as.owner,
-        creator: as.creator,
-        explorerUrl: getArkivExplorerUrl(as.key),
-        messageCount: as.payload.messageCount || 0,
-        sealedAt: as.payload.sealedAt || dbSession?.closed_at || null,
-        isVerifiedOnChain: dbSession ? dbSession.session_hash === as.payload.hash : false,
-      }
-    })
+    // Filter on-chain sessions by owner wallet, and correlate with database session details
+    const correlatedSessions = arkivSessions
+      .filter(as => doctorWalletLower && as.owner?.toLowerCase() === doctorWalletLower)
+      .map(as => {
+        const dbSession = dbSessions?.find(s => s.id === as.payload.sessionId)
+        return {
+          id: as.payload.sessionId,
+          title: dbSession?.title || 'Sesión Clínica',
+          patientId: as.payload.patientId,
+          patientName: dbSession?.patients?.full_name || 'Paciente Desconocido',
+          hash: as.payload.hash,
+          entityKey: as.key,
+          owner: as.owner,
+          creator: as.creator,
+          explorerUrl: getArkivExplorerUrl(as.key),
+          messageCount: as.payload.messageCount || 0,
+          sealedAt: as.payload.sealedAt || dbSession?.closed_at || null,
+          isVerifiedOnChain: dbSession ? dbSession.session_hash === as.payload.hash : false,
+        }
+      })
 
     return NextResponse.json({
       sessions: correlatedSessions,
