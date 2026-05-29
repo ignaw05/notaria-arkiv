@@ -35,14 +35,15 @@ Pensemos en un caso concreto:
 ### 💡 Nuestra Solución (Flujo de la Aplicación)
 Es por eso que creamos **NotarIA**, el escribano digital para decisiones médicas asistidas por IA. El flujo de funcionamiento de la aplicación está integrado directamente en nuestro código y base de datos:
 
-1. **Contextualización Médica (Inicio de Consulta):** El médico inicia una *Nueva Consulta* para un paciente. El sistema extrae su historial médico (diagnósticos, cirugías, tratamientos) y lo utiliza para alimentar el contexto del chat clínico.
-2. **Encadenamiento de Mensajes Local:** Durante la consulta, el médico interactúa con la IA (alimentada por Gemini API con prompts estructurados). Cada mensaje del médico y respuesta del asistente se guarda en la base de datos local (`Supabase`) y se encadena criptográficamente registrando el `hash` y el `previous_hash` del mensaje anterior, formando un blockchain local de mensajes.
-3. **Resumen Inteligente:** Al sellar la sesión o al salir de la pantalla de consulta, se ejecuta un endpoint en segundo plano (`/api/session/[id]/summary`) que genera un resumen conciso de máximo 5 palabras de la sesión médica, optimizando la visualización del listado en el historial clínico del paciente.
-4. **Notarización Descentralizada (`createEntity`):** Al tocar *Sellar*, la sesión se bloquea (no admite más mensajes). Se compila el texto completo de la conversación en un formato canónico, se genera el hash SHA-256 final y se registra como una entidad en la red **Arkiv Network** (Braga Testnet) firmándolo con la clave de la wallet del médico (`ARKIV_PRIVATE_KEY`).
-5. **Auditoría en Caliente Basada en Atributos (`arkiv_query` y `getEntity`):**
-   * Cuando se solicita auditar una consulta sellada, el sistema realiza primero una búsqueda descentralizada en el nodo RPC de Arkiv (`arkiv_query`) buscando la entidad cuyo atributo `sessionId` coincida con la consulta. Esto evita confiar en el ID local almacenado en la base de datos.
-   * Con la clave resuelta, ejecuta `getEntity` para obtener la firma inmutable de la blockchain.
-   * Reconstruye el hash de la conversación usando los mensajes locales actuales. Si un administrador de base de datos o un hacker alteró retroactivamente un mensaje local, las firmas no coinciden y la app alerta visualmente **"Datos Manipulados"**, rompiendo el sello de confianza. Si son idénticos, valida la **"Conversación Íntegra"**.
+1. **Identidad Web3 e Integración de Billetera:** El profesional médico conecta su wallet descentralizada (MetaMask u otras) directamente en la barra lateral de la app. El sistema detecta y asiste en el cambio automático a **Braga Testnet** (Chain ID `60138453102` / hex `0xe0087f86e` y token `GLM`). La dirección vinculada se sincroniza con su perfil seguro de Supabase.
+2. **Contextualización Médica (Inicio de Consulta):** El médico inicia una *Nueva Consulta* para un paciente. El sistema extrae su historial médico (diagnósticos, cirugías, tratamientos) y lo utiliza para alimentar el contexto del chat clínico. Al crear un nuevo paciente, se registra de forma independiente en Arkiv Network como una entidad de tipo `patient` con una expiración inmutable de 10 años (`expiresIn: 315360000` segundos) para historiales clínicos a largo plazo.
+3. **Encadenamiento de Mensajes Local:** Durante la consulta, el médico interactúa con la IA (alimentada por Gemini API con prompts estructurados). Cada mensaje del médico y respuesta del asistente se guarda en la base de datos local y se encadena criptográficamente registrando el `hash` y el `previous_hash` del mensaje anterior, formando una cadena local inmutable de mensajes.
+4. **Resumen Inteligente:** Al sellar la sesión o al salir de la pantalla de consulta, se ejecuta un endpoint en segundo plano (`/api/session/[id]/summary`) que genera un resumen objetivo en una sola oración generado por Gemini, optimizando el panel del historial del paciente.
+5. **Notarización Descentralizada y Modelo de Propiedad ($owner y $creator):** Al sellar la consulta, el sistema genera el hash SHA-256 definitivo del texto canónico. El backend de la app registra la entidad `clinical_session` en Braga Testnet firmando con la clave del servidor para proveer **atribución a prueba de manipulaciones** (`$creator` es el servidor de NotarIA). Inmediatamente después, el servidor ejecuta la transferencia de propiedad (`changeOwnership`) on-chain hacia la wallet conectada del médico (`$owner` es la wallet del médico), configurando una expiración diferenciada de 5 años (`expiresIn: 157680000` segundos).
+6. **Auditoría e Integridad Blockchain:**
+   * Cuando un auditor externo busca verificar la consulta, el sistema realiza primero una búsqueda descentralizada en el nodo RPC de Arkiv (`arkiv_query`) buscando la entidad por su `sessionId`.
+   * Con la clave resuelta, ejecuta `getEntity` para obtener la firma inmutable de la blockchain y lee al propietario actual (`owner`) de la entidad en Braga Testnet.
+   * Reconstruye el hash de la conversación usando los mensajes locales. Si difieren del hash inmutable de la blockchain, la app alerta visualmente **"Datos Manipulados"** y advierte al auditor. Si coinciden, valida la **"Conversación Íntegra"** y muestra la wallet del médico como propietario soberano del registro en la testnet Braga.
 
 **No auditamos a la IA. Auditamos la verdad —y la verdad no debería depender de quién tiene acceso a la base de datos.**
 
@@ -60,8 +61,8 @@ NotarIA fue desarrollado respetando la normativa legal en cada una de sus capas 
 * **Framework Frontend:** Next.js 15 (App Router, Server Actions) + React 19 + TypeScript
 * **Base de Datos y Autenticación:** Supabase (PostgreSQL + RLS)
 * **Estilos y UX:** Tailwind CSS + Shadcn UI + Lucide Icons
-* **Inteligencia Artificial:** Google Gemini API (para generación interactiva de minutas estructuradas y resúmenes de una oración/5 palabras para el listado)
-* **Web3 / Blockchain SDK:** `@arkiv-network/sdk` con la red Braga Testnet.
+* **Inteligencia Artificial:** Google Gemini API (para generación interactiva de minutas estructuradas y resúmenes de una oración para el listado)
+* **Web3 / Blockchain SDK:** `@arkiv-network/sdk` con la red Braga Testnet y MetaMask RPC API.
 
 ---
 
@@ -130,39 +131,43 @@ Para el diseño y desarrollo de este proyecto se utilizaron las siguientes herra
 Para cumplir con las regulaciones de privacidad médica (como **HIPAA** y **GDPR**), el sistema sigue un principio estricto de **cero almacenamiento de información de salud protegida (PII/PHI) en la blockchain**:
 
 ### 1. ¿Qué datos se almacenan en Arkiv?
-Al sellar una consulta, se registra una entidad en Braga Testnet con los siguientes datos:
+Al sellar una consulta, se registra una entidad de tipo `clinical_session` y otra de tipo `patient` en Braga Testnet con los siguientes datos:
 * **Firma Criptográfica (Hash SHA-256):** Un hash de un solo sentido generado a partir de la concatenación ordenada de la conversación (`"role: mensaje | role: mensaje"`).
 * **Atributos de Indexación (Metadatos):**
   * `app = "notaria"`
-  * `type = "clinical_session"`
-  * `sessionId`: El ID único del registro local.
-  * `sealedAt`: Timestamp del sellado.
+  * `type = "clinical_session"` o `type = "patient"`
+  * `sessionId` o `patientId`: IDs únicos de los registros locales correspondientes.
+  * Relación `patientEntityKey`: La referencia on-chain al paciente padre.
+  * `doctorId` y `patientId`: Atributos adicionales para consultas indexadas directas.
 
 ### 2. ¿Qué datos NO se almacenan?
 * **Ningún dato clínico en texto plano:** No se suben diagnósticos, síntomas, recetas ni el contenido de las conversaciones.
-* **Ningún dato de identificación personal:** No se suben nombres de pacientes, documentos (DNI), direcciones, ni datos de los profesionales de salud.
+* **Ningún dato de identificación personal:** No se suben nombres de pacientes, documentos (DNI), direcciones, ni datos sensibles de los profesionales de salud.
 
 ### 3. ¿Por qué se hace de esta manera?
 * **Privacidad por Diseño (Compliance):** Almacenar información de salud protegida en un registro descentralizado público es ilegal e inviable. El uso de hashes asegura confidencialidad matemática absoluta.
 * **Inmutabilidad y Detección de Fraude:** El hash actúa como una huella digital única. Si un atacante o base de datos centralizada altera retrospectivamente un solo caracter de la conversación, el hash reconstruido localmente diferirá del hash inmutable de Arkiv, alertando al instante que la consulta fue manipulada.
-* **Auditoría Independiente:** Los metadatos de indexación permiten a un auditor consultar en Arkiv (`arkiv_query`) si una sesión existe y cuál es su firma, pudiendo verificar la validez de los datos de manera externa y autónoma.
+* **Soberanía y Modelo de Propiedad ($owner):** Al transferir la propiedad al médico, este se convierte en el único soberano autorizado a interactuar con su registro en el futuro, mientras NotarIA garantiza la autenticidad origen (`$creator`).
 
 ---
 
 ## 🔗 Integración Detallada con Arkiv Network
-NotarIA utiliza tres capacidades del SDK de Arkiv para descentralizar la confianza médica:
+NotarIA utiliza cuatro capacidades del SDK de Arkiv para descentralizar la confianza médica:
 
-### 1. Registro de Entidades (`createEntity`)
-Cuando la consulta finaliza, el médico presiona **Sellar**. El backend de la app compila el texto completo de la conversación en un formato canónico (`"user: mensaje | assistant: mensaje"`), calcula su hash criptográfico SHA-256 y utiliza `walletClient.createEntity` para registrarlo.
-* **Funcionamiento:** Se crea un payload inmutable que asocia el hash de la sesión con atributos indexables como el `sessionId` del paciente, el `doctorId`, y la marca de tiempo del sellado. Esta operación es firmada por la wallet del médico utilizando la `ARKIV_PRIVATE_KEY` en la testnet Braga.
+### 1. Registro de Entidades Relacionadas (`createEntity`)
+* **Pacientes (`patient`):** Se registran de forma inmutable con una expiración de 10 años (`expiresIn: 315360000`). La propiedad de esta entidad se transfiere al médico si tiene su wallet Web3 conectada.
+* **Sesiones (`clinical_session`):** Se registran inmutablemente con una expiración de 5 años (`expiresIn: 157680000`). Incluyen en sus atributos la clave de entidad blockchain del paciente (`patientEntityKey`), estableciendo un vínculo relacional padre-hijo directamente en el grafo de Arkiv Network.
 
-### 2. Consulta por Atributos (`arkiv_query`)
+### 2. Transferencia de Propiedad On-Chain (`changeOwnership`)
+* **Abstracción Blockchain:** Para que el médico sea dueño soberano del registro sin tener que firmar transacciones de escritura repetidamente ni pagar costos de gas, el servidor de NotarIA actúa como creador y pagador de gas (`$creator`), y mediante `changeOwnership` transfiere inmediatamente la propiedad de la entidad a la wallet descentralizada del profesional (`$owner`).
+
+### 3. Consulta Descentralizada por Atributos (`arkiv_query`)
 Durante el proceso de auditoría y verificación en caliente, la aplicación no confía únicamente en el ID de entidad almacenado en su base de datos Supabase (el cual también podría haber sido alterado). En su lugar, realiza una consulta descentralizada directamente al nodo RPC de Arkiv.
 * **Funcionamiento:** Envía una solicitud JSON-RPC `arkiv_query` con los filtros `app = "notaria" && type = "clinical_session" && sessionId = "${sessionId}"`. De esta forma, el sistema recupera la `entityKey` correcta directamente de la red Braga de forma autónoma.
 
-### 3. Recuperación de Entidades (`getEntity`)
-Una vez obtenida la clave de la entidad inmutable (ya sea por query en caliente o fallback de la base de datos), el sistema descarga el payload inmutable desde Arkiv Network para comprobar su validez.
-* **Funcionamiento:** Llama a `arkivPublicClient.getEntity(entityKey)` para obtener el payload almacenado de forma inmutable en la red. Compara el campo `hash` de los datos de la red con el hash obtenido al reconstruir localmente la conversación con los mensajes actuales de Supabase. Si coinciden, la auditoría muestra un estado verde de **Conversación Íntegra**; si difieren, arroja un estado rojo de **Datos Manipulados**.
+### 4. Recuperación de Entidades e Identidad (`getEntity`)
+Una vez obtenida la clave de la entidad inmutable, el sistema descarga el payload inmutable desde Arkiv Network para comprobar su validez.
+* **Funcionamiento:** Llama a `arkivPublicClient.getEntity(entityKey)` para obtener el payload. Compara el campo `hash` de los datos de la red con el hash obtenido al reconstruir localmente la conversación con los mensajes actuales de Supabase. Adicionalmente, recupera el campo `owner` de la entidad para mostrar en la interfaz de auditoría el médico firmante responsable de la sesión.
 
 ---
 
