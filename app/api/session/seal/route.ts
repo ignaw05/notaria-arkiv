@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateHash } from '@/lib/crypto'
-import { registerSessionOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
+import { registerSessionOnArkiv, registerPatientOnArkiv, isArkivConfigured, getArkivExplorerUrl, getArkivTxUrl } from '@/lib/arkiv'
 
 export async function POST(req: Request) {
   try {
@@ -74,6 +74,31 @@ export async function POST(req: Request) {
     // Register on Arkiv Network if configured
     if (isArkivConfigured()) {
       try {
+        // Dynamic, on-the-fly registration for existing patients created prior to Web3 implementation
+        let patientEntityKey = session.patients?.arkiv_entity_id || null
+
+        if (session.patients && !patientEntityKey) {
+          try {
+            console.log(`[Arkiv] Patient ${session.patients.id} has no on-chain entity. Registering now...`)
+            const patientRegisterResult = await registerPatientOnArkiv(
+              session.patients.id,
+              session.patients.full_name,
+              profile?.wallet_address || null
+            )
+            patientEntityKey = patientRegisterResult.entityKey
+            
+            // Persist the resolved patientEntityKey to Supabase
+            await supabase
+              .from('patients')
+              .update({ arkiv_entity_id: patientEntityKey })
+              .eq('id', session.patients.id)
+              
+            console.log(`[Arkiv] Patient dynamically registered: ${patientEntityKey}`)
+          } catch (patientRegisterError) {
+            console.error('[Arkiv] Error registering patient dynamically:', patientRegisterError)
+          }
+        }
+
         const arkivResult = await registerSessionOnArkiv(
           sessionId,
           sessionHash,
@@ -82,7 +107,7 @@ export async function POST(req: Request) {
             patientId: session.patient_id || 'anonymous',
             messageCount: messages.length,
             sealedAt: closedAt,
-            patientEntityKey: session.patients?.arkiv_entity_id || null,
+            patientEntityKey: patientEntityKey,
             ownerWalletAddress: profile?.wallet_address || null,
           }
         )
