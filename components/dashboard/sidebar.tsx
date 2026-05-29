@@ -93,10 +93,10 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <Shield className="h-6 w-6 text-sidebar-primary" />
+        <div className="flex items-center gap-2 px-1 py-1">
+          <img src="/logo.png" alt="NotarIA Logo" className="h-8 w-8 object-contain shrink-0" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-sidebar-foreground">NotarIA</span>
+            <span className="text-sm font-bold text-sidebar-foreground tracking-tight">NotarIA</span>
           </div>
         </div>
       </SidebarHeader>
