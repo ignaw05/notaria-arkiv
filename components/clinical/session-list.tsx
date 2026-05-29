@@ -79,7 +79,7 @@ export function SessionList({ sessions, userId }: SessionListProps) {
                   {/* Session Info */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start sm:items-center gap-2.5 flex-col sm:flex-row">
-                      <div className="font-semibold text-sm text-foreground truncate max-w-[200px]" title={session.title || 'Consulta'}>
+                      <div className="font-semibold text-sm text-foreground" title={session.title || 'Consulta'}>
                         {session.title || 'Consulta sin título'}
                       </div>
                       <Badge
